@@ -1,0 +1,43 @@
+{{define "page-policy"}}
+<h1>Policy-as-ACs</h1>
+<p class="subtitle">The agent's own strategy manual (poker-policy.json), turned into checkable assertions and run against real logged decisions.</p>
+
+<section class="grid">
+  <div class="card" data-testid="policy-summary-card">
+    <h3>Decisions Checked</h3>
+    <p class="big-number">{{.Report.TotalDecisions}}</p>
+    <p class="muted">against {{len .Report.RulesRun}} rules</p>
+  </div>
+  <div class="card" data-testid="violations-card">
+    <h3>Violations Found</h3>
+    <p class="big-number {{if .Report.Violations}}violation-nonzero{{end}}">{{len .Report.Violations}}</p>
+    <p class="muted">policy breaks caught in the decision log</p>
+  </div>
+</section>
+
+<h2>Rules run</h2>
+<ul class="rule-list" data-testid="rules-run">
+  {{range .Report.RulesRun}}<li><code>{{.}}</code></li>{{end}}
+</ul>
+
+<h2>Violations</h2>
+{{if .Report.Violations}}
+<table class="violations-table" data-testid="violations-table">
+  <thead><tr><th>Rule</th><th>Hand</th><th>Street</th><th>Action</th><th>Pot</th><th>Detail</th></tr></thead>
+  <tbody>
+    {{range .Report.Violations}}
+    <tr>
+      <td><code>{{.Rule}}</code></td>
+      <td>{{.HandCode}}</td>
+      <td>{{.Street}}</td>
+      <td>{{.Action}}</td>
+      <td>{{.Pot}}</td>
+      <td>{{.Detail}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{else}}
+<p class="empty-state" data-testid="no-violations">No violations found in the checked decisions.</p>
+{{end}}
+{{end}}

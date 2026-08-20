@@ -1,0 +1,28 @@
+{{define "review-row"}}
+<div class="review-item verdict-{{.Verdict}}" id="review-item-{{.DecisionID}}" data-testid="review-item" data-decision-id="{{.DecisionID}}" data-verdict="{{.Verdict}}">
+  <div class="review-item-head">
+    <span class="hand-code">{{.HandCode}}</span>
+    <span class="street">{{.Street}}</span>
+    <span class="pot">pot {{.Pot}}</span>
+    <span class="verdict-badge">{{.Verdict}}</span>
+  </div>
+  <div class="review-item-body">
+    <p><strong>Agent:</strong> {{.OurAction}} &mdash; <strong>Shadow-LLM:</strong> {{.LLMAction}}</p>
+    <pre class="llm-rationale">{{.ResponseText}}</pre>
+  </div>
+  <div class="review-item-actions">
+    <button
+      hx-post="/review/{{.DecisionID}}/accept"
+      hx-target="#review-item-{{.DecisionID}}"
+      hx-swap="outerHTML"
+      data-testid="accept-btn"
+      class="btn btn-accept">Accept agent</button>
+    <button
+      hx-post="/review/{{.DecisionID}}/reject"
+      hx-target="#review-item-{{.DecisionID}}"
+      hx-swap="outerHTML"
+      data-testid="reject-btn"
+      class="btn btn-reject">Reject (LLM right)</button>
+  </div>
+</div>
+{{end}}

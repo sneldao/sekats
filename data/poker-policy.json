@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "purpose": "Fast conservative no-limit Texas Hold'em policy for DevFun Arena runner code.",
+  "global": {
+    "deadlinePanicMs": 10000,
+    "defaultFreeAction": "check",
+    "defaultPaidAction": "fold",
+    "neverRevealLiveHoleCards": true,
+    "preferLegalActionOnly": true
+  },
+  "mixedStrategy": {
+    "enabled": true,
+    "tournamentScale": 0.75,
+    "firstInMix": {
+      "early": 0.0,
+      "middle": 0.28,
+      "late": 0.42
+    },
+    "overfolderPressure": 0.3,
+    "postflopSmallStab": 0.2,
+    "antiThresholdPressure": 0.28,
+    "antiThresholdTarget": 0.16,
+    "antiThresholdMediumTarget": 0.18
+  },
+  "jackpot": {
+    "enabled": true,
+    "hand": "72o",
+    "preflopSteal": 0.22,
+    "flopProbe": 0.18,
+    "turnRiverBlast": 0.42,
+    "maxTournamentCommitFraction": 0.08,
+    "maxPlaygroundCommitFraction": 0.12
+  },
+  "preflop": {
+    "premium": ["AA", "KK", "QQ", "JJ", "AKs", "AKo"],
+    "strong": ["TT", "99", "AQs", "AQo", "AJs", "KQs"],
+    "playableSuited": ["ATs", "A9s", "A8s", "A7s", "A6s", "A5s", "A4s", "A3s", "A2s", "KJs", "KTs", "QJs", "QTs", "JTs", "T9s", "98s", "87s", "76s", "65s"],
+    "playableOffsuitLate": ["AJo", "ATo", "KQo", "KJo", "QJo"],
+    "dominatedFoldCandidates": ["A2o", "A3o", "A4o", "A5o", "A6o", "A7o", "A8o", "A9o", "K2o", "K3o", "K4o", "K5o", "K6o", "K7o", "Q2o", "Q3o", "Q4o", "Q5o"],
+    "trashExamples": ["93o", "92o", "83o", "82o", "72o", "T3o", "J4o"],
+    "firstIn": {
+      "early": {
+        "raise": ["55+", "AJs+", "KQs", "AQo+"],
+        "foldUnlessMixed": ["ATs", "KJs", "QJs", "44"]
+      },
+      "middle": {
+        "raise": ["44+", "ATs+", "KJs+", "QJs", "JTs", "AJo+", "KQo"],
+        "mix": ["A9s", "KTs", "QTs", "T9s", "98s"]
+      },
+      "late": {
+        "raise": ["22+", "A2s+", "K9s+", "Q9s+", "J9s+", "T9s", "98s", "87s", "76s", "65s", "ATo+", "KJo+", "QJo"],
+        "mix": ["K8s", "Q8s", "J8s", "T8s", "97s", "86s", "A2o", "A3o", "A4o", "A5o", "J9o"]
+      }
+    },
+    "shortStack": {
+      "push15bb": ["anyPair", "anyAce", "KJs+", "KQo", "QJs", "QTs", "JTs", "T9s", "98s"],
+      "push10bb": ["anyPair", "anyAce", "K7s+", "K9o+", "Q9s+", "QTo+", "J9s+", "JTo", "T9s", "98s", "87s"]
+    },
+    "facingRaise": {
+      "threeBetValue": ["QQ+", "AKs", "AKo"],
+      "threeBetLateOrLoose": ["JJ", "TT", "AQs", "AJs", "KQs"],
+      "callWithPrice": ["22+", "AJs", "ATs", "KQs", "KJs", "QJs", "JTs", "T9s", "98s", "87s", "76s"],
+      "foldDefault": ["weakOffsuitAces", "weakOffsuitKings", "disconnectedOffsuitHands"]
+    },
+    "facingOpenByPosition": {
+      "early": {
+        "threeBetValue": ["QQ+", "AKs", "AKo"],
+        "callPriceSensitive": ["JJ", "TT", "99", "AJs", "KQs", "AQs"],
+        "foldDominated": ["AJo", "ATo", "KQo", "KJo", "QJo", "lowPairsNoPrice"]
+      },
+      "middle": {
+        "threeBetValue": ["QQ+", "AKs", "AKo", "AQs"],
+        "threeBetMixed": ["JJ", "TT", "AJs", "KQs"],
+        "callPriceSensitive": ["99", "88", "77", "66", "55", "ATs", "KJs", "QJs", "JTs", "T9s"],
+        "foldDominated": ["weakOffsuitAces", "weakOffsuitKings", "disconnectedOffsuitHands"]
+      },
+      "late": {
+        "threeBetValue": ["JJ+", "AKs", "AKo", "AQs", "AQo"],
+        "threeBetMixed": ["TT", "99", "AJs", "ATs", "KQs", "KJs", "QJs", "A5s", "A4s"],
+        "callPriceSensitive": ["88-22", "A9s-A2s", "KTs", "QTs", "JTs", "T9s", "98s", "87s", "76s"],
+        "foldDominated": ["weakOffsuitBroadways", "disconnectedOffsuitHands"]
+      }
+    },
+    "stackOff": {
+      "deepDefault": ["AA", "KK", "QQ", "AKs", "AKo"],
+      "mediumDefault": ["QQ+", "AKs", "AKo", "JJ"],
+      "shortDefault": ["anyPair", "anyAce", "KJs+", "KQo"],
+      "deepAvoid": ["JJ", "TT", "99", "AQo", "AQs", "AJs", "KQs"],
+      "rule": "Without short-stack pressure or extreme pot odds, avoid tournament-life preflop stack-offs below QQ+/AK."
+    },
+    "limpedPot": {
+      "isolateValue": ["55+", "ATs+", "KJs+", "QJs", "JTs"],
+      "isolateExploit": ["44", "33", "22", "A5s", "A4s", "A3s", "A2s", "T9s", "98s"]
+    }
+  },
+  "postflop": {
+    "promotedFromHandReviews": [
+      {
+        "pattern": "AQ overcards plus gutshot on wet flop after checks",
+        "rule": "Bet about half pot when checked to for fold equity and protection."
+      },
+      {
+        "pattern": "Trips or better facing ordinary river pressure",
+        "rule": "Continue unless the sizing is extreme."
+      },
+      {
+        "pattern": "Two overcards plus backdoor equity facing half-pot flop pressure",
+        "rule": "Continue at 2:1 or better in non-tournament modes only when the line has not escalated; tighten the threshold in tournaments."
+      },
+      {
+        "pattern": "ATo facing clean late-position RFI",
+        "rule": "3-bet for blocker pressure only when the first raise follows at least two preflop folds and there were no limps; skip eval and short-stack tournament spots."
+      },
+      {
+        "pattern": "Top pair on wet flop facing small pressure",
+        "rule": "Raise or size up above half pot when legal to deny draw equity."
+      }
+    ],
+    "boardTextures": {
+      "dryHighCard": {
+        "cbet": "smallHighFrequencyAsAggressor",
+        "continue": ["topPairGoodKicker", "overpair", "sets", "strongDraws", "aceHighWithBackdoors"]
+      },
+      "wetConnected": {
+        "cbet": "selective",
+        "continue": ["twoPairPlus", "overpairWithCaution", "topPairGoodKicker", "comboDraws", "nutDraws"]
+      },
+      "paired": {
+        "cbet": "smallOftenWhenRangeAdvantage",
+        "continue": ["trips", "overpair", "topPair", "goodKicker", "credibleBackdoors"]
+      },
+      "monotone": {
+        "cbet": "cautious",
+        "continue": ["flush", "set", "nutFlushDraw", "topPairStrongKicker", "strongBlocker"]
+      }
+    },
+    "drawApproxEquity": {
+      "flushDrawFlopToRiver": 0.36,
+      "flushDrawOneCard": 0.18,
+      "openEndedStraightFlopToRiver": 0.32,
+      "openEndedStraightOneCard": 0.16,
+      "gutshotFlopToRiver": 0.16,
+      "gutshotOneCard": 0.08
+    },
+    "sizing": {
+      "small": "25-35 percent pot for range advantage, dry boards, thin value, and cheap bluffs",
+      "medium": "50-75 percent pot for value/protection on draw-heavy boards",
+      "large": "polarized value or high-equity semi-bluffs only"
+    },
+    "tournamentGuardrails": {
+      "format": "S1/S2/S3 are chip-accumulator seasons with up to 6 rebuys, no ICM, no pay jumps. Rebuy state drives guardrail strictness.",
+      "onePair": "Pot-control one pair when aggression escalates. Tiered by rebuys: many (>=3) convert raise->call at aggression>=3, fold at stack_risk>=0.75 or aggression>=4; some (1-2) at aggression>=2 and stack_risk>=0.65/aggression>=3; none/unknown at aggression>=1 and stack_risk>=0.45/aggression>=2.",
+      "stackOff": "Preflop stack-off with medium pairs (99-JJ) folds when price_ratio>=0.75 with many rebuys, >=0.65 with some, or >=0.12 (0.18 for JJ) with none. Aggression triggers: >=5 many, >=4 some, >=2/3 none.",
+      "draws": "Call draws only when direct pot odds are close; prefer nut or combo draws for semi-bluffs.",
+      "multiway": "Tighten one-pair and non-nut draw continues in multiway pots."
+    }
+  },
+  "modeAdjustments": {
+    "eval": {
+      "style": "conservativeFast",
+      "avoid": ["thinHeroCalls", "slowMixedFrequencies", "marginalDominatedPreflopContinues"],
+      "panicPolicy": ["checkIfFree", "foldTrash", "callSmallWithPlayable", "raisePremiumOnly"]
+    },
+    "playground": {
+      "style": "bankrollPreservingExploitative",
+      "avoid": ["unnecessaryAllInVariance", "rebuyAssumptions", "largeBluffsIntoCallingStations"],
+      "exploit": {
+        "overfolds": "smallCbetMoreOften",
+        "overcalls": "valueBetThinnerBluffLess",
+        "overaggressive": "trapStrongMadeHands"
+      }
+    },
+    "tournament": {
+      "style": "chipPreservingPressure",
+      "avoid": ["marginalCallsFacingLargePressure", "thinBluffsIntoStickyProfiles", "nonPremiumAllIns"],
+      "exploit": {
+        "overfolds": "smallPressureWithPlayableHands",
+        "tightRaisers": "foldMarginalPlayableHandsToPressure",
+        "overaggressive": "continueStrongValueAndTrap"
+      }
+    }
+  },
+  "messageTemplates": {
+    "foldDominated": "This hand is too dominated to continue profitably.",
+    "raiseValue": "This is a strong value spot, so I am applying pressure.",
+    "callPrice": "The price is good enough to continue with real equity.",
+    "cbetRange": "This texture favors the aggressor, so a small bet can apply pressure.",
+    "potControl": "This hand has showdown value, but the texture argues for pot control."
+  }
+}

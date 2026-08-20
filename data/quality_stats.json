@@ -1,0 +1,458 @@
+{
+  "policy_suggestions_total": 6243,
+  "policy_suggestions_promoted": 6,
+  "llm_reviews_total": 10388,
+  "llm_reviews_by_error": [
+    {
+      "bucket": "clean",
+      "c": 6682
+    },
+    {
+      "bucket": "HTTP Error 403: Forbidden",
+      "c": 2364
+    },
+    {
+      "bucket": "parse: illegal",
+      "c": 498
+    },
+    {
+      "bucket": "The read operation timed out",
+      "c": 311
+    },
+    {
+      "bucket": "empty_response",
+      "c": 292
+    },
+    {
+      "bucket": "parse: no_action",
+      "c": 126
+    },
+    {
+      "bucket": "HTTP Error 402: Payment Required",
+      "c": 80
+    },
+    {
+      "bucket": "HTTP Error 500: Internal Server Error",
+      "c": 12
+    },
+    {
+      "bucket": "HTTP Error 429: Too Many Requests",
+      "c": 12
+    },
+    {
+      "bucket": "parse: unparseable",
+      "c": 11
+    }
+  ],
+  "linked_reviews": 2712,
+  "agreement_breakdown": [
+    {
+      "our_action": "fold",
+      "llm_action": "fold",
+      "c": 793
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "raise",
+      "c": 335
+    },
+    {
+      "our_action": "call",
+      "llm_action": "call",
+      "c": 160
+    },
+    {
+      "our_action": "check",
+      "llm_action": "check",
+      "c": 136
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "c": 118
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "bet",
+      "c": 71
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "call",
+      "c": 67
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "fold",
+      "c": 44
+    },
+    {
+      "our_action": "fold",
+      "llm_action": "call",
+      "c": 20
+    },
+    {
+      "our_action": "call",
+      "llm_action": "fold",
+      "c": 16
+    },
+    {
+      "our_action": "call",
+      "llm_action": "raise",
+      "c": 6
+    },
+    {
+      "our_action": "fold",
+      "llm_action": "raise",
+      "c": 5
+    },
+    {
+      "our_action": "all-in",
+      "llm_action": "all-in",
+      "c": 2
+    },
+    {
+      "our_action": "check",
+      "llm_action": "bet",
+      "c": 1
+    },
+    {
+      "our_action": "check",
+      "llm_action": "fold",
+      "c": 1
+    }
+  ],
+  "agreement_rate": {
+    "agree": 1497,
+    "total": 1775
+  },
+  "disagreements_sample": [
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "A7o",
+      "street": "Turn",
+      "pot": 9,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Flush draw + overcard, but paired board reduces fold equity. Check to see turn, avoid bloating pot.\"\n}",
+      "decision_id": 26175
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "K5s",
+      "street": "Flop",
+      "pot": 12,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Weak hand with backdoor draw; check to see turn cheaply. No need to bluff this dry paired board.\"\n}",
+      "decision_id": 26140
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "KTo",
+      "street": "Flop",
+      "pot": 13,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Top pair medium kicker on wet board; check to control pot and evaluate turn action.\"\n}",
+      "decision_id": 26132
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "K5s",
+      "street": "Flop",
+      "pot": 26,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.7,\n  \"rationale\": \"Weak draw with overcards; multiway pot. Check to see turn cheaply. No need to bluff into overfolders.\"\n}",
+      "decision_id": 26123
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "KTs",
+      "street": "River",
+      "pot": 122,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"River completes straight and flush draws; top pair second kicker is marginal value. Check to induce bluffs from aggressive opponents.\"\n}",
+      "decision_id": 26120
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "A8o",
+      "street": "Turn",
+      "pot": 17,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.75,\n  \"rationale\": \"Weak draw with A-high; check to see free card. Betting risks unnecessary variance vs overfolders.\"\n}",
+      "decision_id": 26086
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "call",
+      "hand_code": "A8o",
+      "street": "Preflop",
+      "pot": 5,
+      "response_text": "  \"action\": \"call\",\n  \"amount\": 2,\n  \"confidence\": 0.85,\n  \"rationale\": \"A8o is weak offsuit; facing a raise, fold per localPolicy. Call only if price is good.\"\n}",
+      "decision_id": 26084
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "K7o",
+      "street": "Flop",
+      "pot": 5,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Weak hand with no draw; check to see free card. Betting only folds worse, no value.\"\n}",
+      "decision_id": 26076
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "fold",
+      "hand_code": "K5s",
+      "street": "Preflop",
+      "pot": 3,
+      "response_text": "  \"action\": \"fold\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"K5s is weak offsuit; facing a raise with overfolders, fold per localPolicy facingRaise foldDefault.\"\n}",
+      "decision_id": 26049
+    },
+    {
+      "our_action": "call",
+      "llm_action": "raise",
+      "hand_code": "A8o",
+      "street": "Flop",
+      "pot": 28,
+      "response_text": "  \"action\": \"raise\",\n  \"amount\": 20,\n  \"confidence\": 0.85,\n  \"rationale\": \"Top pair top kicker on dry board; raise for value vs overfolders, pot control not needed.\"\n}",
+      "decision_id": 26044
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "88",
+      "street": "Flop",
+      "pot": 16,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"88 is a vulnerable overpair on paired board. Check to pot control and induce bluffs from overfolders.\"\n}",
+      "decision_id": 26004
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "KQo",
+      "street": "Turn",
+      "pot": 20,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.75,\n  \"rationale\": \"KQo with overcards and gutshot; check for free card. Opponents overfold, but no need to bluff here.\"\n}",
+      "decision_id": 25997
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "call",
+      "hand_code": "QTo",
+      "street": "Preflop",
+      "pot": 3,
+      "response_text": "  \"action\": \"call\",\n  \"amount\": 2,\n  \"confidence\": 0.85,\n  \"rationale\": \"QTo is marginal vs 5 opponents; call cheap to see flop, avoid bloating pot OOP.\"\n}",
+      "decision_id": 25989
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "Q9o",
+      "street": "River",
+      "pot": 5,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Weak pair with 9h on Ah3sTh2d9d; opponent overfolds, but check to avoid value-owning vs calling station.\"\n}",
+      "decision_id": 25968
+    },
+    {
+      "our_action": "call",
+      "llm_action": "fold",
+      "hand_code": "K9o",
+      "street": "Preflop",
+      "pot": 3,
+      "response_text": "  \"action\": \"fold\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"K9o is weak offsuit; facing a raise, fold per localPolicy. Overfolders present, but hand too weak to continue.\"\n}",
+      "decision_id": 25962
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "fold",
+      "hand_code": "K9o",
+      "street": "Preflop",
+      "pot": 11,
+      "response_text": "  \"action\": \"fold\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"K9o is weak offsuit; facing a raise, fold per localPolicy facingRaise foldDefault.\"\n}",
+      "decision_id": 25888
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "J7o",
+      "street": "Flop",
+      "pot": 10,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.65,\n  \"rationale\": \"Bottom pair with weak kicker on wet board; check to control pot and see turn.\"\n}",
+      "decision_id": 25872
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "Q9o",
+      "street": "Turn",
+      "pot": 49,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Weak hand with no draw; check to see free river. Folding is too tight given rebuy meta.\"\n}",
+      "decision_id": 25868
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "call",
+      "hand_code": "A3s",
+      "street": "Preflop",
+      "pot": 3,
+      "response_text": "  \"action\": \"call\",\n  \"amount\": 2,\n  \"confidence\": 0.85,\n  \"rationale\": \"A3s is marginal; call cheap price to see flop multiway. Avoid raise vs overfolders.\"\n}",
+      "decision_id": 25842
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "A6o",
+      "street": "Turn",
+      "pot": 21,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Weak hand with no draw. Check to see free card; fold to any bet. Overfolders likely check back.\"\n}",
+      "decision_id": 25835
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "fold",
+      "hand_code": "J9o",
+      "street": "Preflop",
+      "pot": 8,
+      "response_text": "  \"action\": \"fold\",\n  \"amount\": 0,\n  \"confidence\": 0.75,\n  \"rationale\": \"J9o is weak offsuit; facing a raise with deep stacks, fold per localPolicy facingRaise foldDefault.\"\n}",
+      "decision_id": 25831
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "call",
+      "hand_code": "66",
+      "street": "Preflop",
+      "pot": 3,
+      "response_text": "  \"action\": \"call\",\n  \"amount\": 2,\n  \"confidence\": 0.85,\n  \"rationale\": \"66 has set-mining value vs loose field; call cheap price, avoid multi-raise war per localPolicy.\"\n}",
+      "decision_id": 25797
+    },
+    {
+      "our_action": "bet",
+      "llm_action": "check",
+      "hand_code": "AQo",
+      "street": "River",
+      "pot": 26,
+      "response_text": "  \"action\": \"check\",\n  \"amount\": 0,\n  \"confidence\": 0.85,\n  \"rationale\": \"Ace-high with no pair on paired board; check to realize showdown equity cheaply.\"\n}",
+      "decision_id": 25795
+    },
+    {
+      "our_action": "fold",
+      "llm_action": "call",
+      "hand_code": "A9o",
+      "street": "Turn",
+      "pot": 48,
+      "response_text": "  \"action\": \"call\",\n  \"amount\": 30,\n  \"confidence\": 0.65,\n  \"rationale\": \"Gutshot + overcard to nuts, good implied odds vs overfolding opponents.\"\n}",
+      "decision_id": 25786
+    },
+    {
+      "our_action": "raise",
+      "llm_action": "fold",
+      "hand_code": "97o",
+      "street": "Preflop",
+      "pot": 3,
+      "response_text": "  \"action\": \"fold\",\n  \"amount\": 0,\n  \"confidence\": 0.95,\n  \"rationale\": \"97o is weak offsuit junk; facing a raise with deep stacks, fold per localPolicy facingRaise foldDefault.\"\n}",
+      "decision_id": 25775
+    }
+  ],
+  "preflop_action_dist": [
+    {
+      "hand_code": "A9o",
+      "action": "raise",
+      "c": 339
+    },
+    {
+      "hand_code": "QQ",
+      "action": "raise",
+      "c": 249
+    },
+    {
+      "hand_code": "AKo",
+      "action": "raise",
+      "c": 236
+    },
+    {
+      "hand_code": "AQo",
+      "action": "raise",
+      "c": 206
+    },
+    {
+      "hand_code": "82o",
+      "action": "fold",
+      "c": 190
+    },
+    {
+      "hand_code": "J2o",
+      "action": "fold",
+      "c": 189
+    },
+    {
+      "hand_code": "Q5o",
+      "action": "fold",
+      "c": 184
+    },
+    {
+      "hand_code": "32o",
+      "action": "fold",
+      "c": 182
+    },
+    {
+      "hand_code": "75o",
+      "action": "fold",
+      "c": 178
+    },
+    {
+      "hand_code": "T4o",
+      "action": "fold",
+      "c": 178
+    },
+    {
+      "hand_code": "T5o",
+      "action": "fold",
+      "c": 178
+    },
+    {
+      "hand_code": "76o",
+      "action": "fold",
+      "c": 176
+    },
+    {
+      "hand_code": "J4o",
+      "action": "fold",
+      "c": 176
+    },
+    {
+      "hand_code": "K8o",
+      "action": "fold",
+      "c": 176
+    },
+    {
+      "hand_code": "K5o",
+      "action": "fold",
+      "c": 173
+    },
+    {
+      "hand_code": "Q8o",
+      "action": "fold",
+      "c": 170
+    },
+    {
+      "hand_code": "92o",
+      "action": "fold",
+      "c": 169
+    },
+    {
+      "hand_code": "J8o",
+      "action": "fold",
+      "c": 169
+    },
+    {
+      "hand_code": "K2o",
+      "action": "fold",
+      "c": 168
+    },
+    {
+      "hand_code": "65o",
+      "action": "fold",
+      "c": 167
+    }
+  ]
+}
