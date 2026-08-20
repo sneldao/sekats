@@ -10,7 +10,7 @@ package review
 import (
 	"sync"
 
-	"github.com/udingethe/kane-poker-quality/internal/store"
+	"github.com/udingethe/sekats/internal/store"
 )
 
 // Verdict is the human's call on one disagreement: accept the agent's

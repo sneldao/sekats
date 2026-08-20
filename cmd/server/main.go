@@ -1,4 +1,4 @@
-// Command server runs the Kane Poker Quality console: a server-rendered
+// Command server runs the Sekats console: a server-rendered
 // Go + htmx app that turns the DevFun Arena poker agent's own policy and
 // review data into a checkable quality surface. See docs/PLAN.md.
 package main
@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/udingethe/kane-poker-quality/internal/policy"
-	"github.com/udingethe/kane-poker-quality/internal/quality"
-	"github.com/udingethe/kane-poker-quality/internal/review"
-	"github.com/udingethe/kane-poker-quality/internal/store"
+	"github.com/udingethe/sekats/internal/policy"
+	"github.com/udingethe/sekats/internal/quality"
+	"github.com/udingethe/sekats/internal/review"
+	"github.com/udingethe/sekats/internal/store"
 )
 
 type app struct {
@@ -58,7 +58,7 @@ func main() {
 	mux.HandleFunc("/review/", a.handleReviewAction)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
-	log.Printf("kane-poker-quality listening on %s (data=%s)", addr, dataDir)
+	log.Printf("sekats listening on %s (data=%s)", addr, dataDir)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}

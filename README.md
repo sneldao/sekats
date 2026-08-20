@@ -1,4 +1,4 @@
-# Kane Poker Quality
+# Sekats
 
 **You can't `assertEquals` an agent.**
 

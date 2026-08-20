@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/udingethe/kane-poker-quality/internal/store"
+	"github.com/udingethe/sekats/internal/store"
 )
 
 // Violation is one decision that broke one policy rule.

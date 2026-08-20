@@ -1,3 +1,3 @@
-module github.com/udingethe/kane-poker-quality
+module github.com/udingethe/sekats
 
 go 1.26.2
