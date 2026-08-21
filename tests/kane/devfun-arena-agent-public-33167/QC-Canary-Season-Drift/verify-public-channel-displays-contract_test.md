@@ -9,8 +9,7 @@ variables: {}
 
 ## Step 1
 Navigate to http://127.0.0.1:8765/
-Click the **Enter the operations** button.
-Click the **Public** channel button in the main navigation.
+Click **See the live check**.
 Verify that a contract verdict is displayed on the screen.
 Verify that the claimed seasons list is visible.
 Verify that the live arena seasons list is visible.

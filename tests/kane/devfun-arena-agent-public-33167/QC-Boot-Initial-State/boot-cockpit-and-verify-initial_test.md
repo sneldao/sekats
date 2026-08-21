@@ -5,15 +5,15 @@ timeout: 300
 variables: {}
 ---
 
-# Boot cockpit and verify initial state with 'Field' channel selected
+# Boot parlor and verify Public (live canary) is selected
 
 ## Step 1
-Boot cockpit and verify initial state with 'Field' channel selected
+Boot parlor and verify Public channel is selected
 
-Verifies that navigating to the landing page and entering the operations dashboard displays the 'Stack Cartographer QC' wordmark and defaults to the 'Field' channel view.
+Verifies that navigating to the landing page and choosing the live check opens the sheet on the Public channel with the Stack Cartographer QC wordmark.
 
 Navigate to http://127.0.0.1:8765/
-Enter the operations dashboard
-Verify the main title or wordmark on the dashboard.
-Check the default channel selection.
-Observe the content area for the 'Field' channel.
+Click **See the live check**
+Verify the main title or wordmark on the dashboard includes Stack Cartographer QC.
+Check that the Public channel is selected.
+Observe the Public card content area for a contract verdict (HOLD, DRIFT, or pending).

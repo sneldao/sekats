@@ -64,8 +64,10 @@ They are not this app. See [`SECURITY.md`](../SECURITY.md) and
 
 ## Invariants Kane must prove
 
-1. **Boot contract** — “Enter the operations” reaches Stack Cartographer QC
-   with Field selected and visible.
+1. **Boot contract** — “See the live check” reaches Stack Cartographer QC
+   with **Public** selected (the live canary). Memory cards remain available
+   via swipe / keys 1–4.
+
 2. **Season contract** — every competition ID in `contract.json` appears in
    live `list-active`. Fail = **DRIFT**. Pass = **HOLD**.
 3. **Identity contract** — cockpit handle/name match the live profile at
@@ -81,7 +83,7 @@ Keep `assets/contract.stale.json` (old seasons) and `assets/contract.live.json`
 
 Tape, in order:
 
-1. `python3 tools/qc_server.py` — landing → Enter the operations → **Public**.
+1. `python3 tools/qc_server.py` — landing → **See the live check** → **Public**.
 2. `./tools/demo_contract.sh stale` — reload Public — **DRIFT**. Kane Public
    test still passes (it accepts DRIFT or HOLD). `./verify.sh` fails on the
    season probe.

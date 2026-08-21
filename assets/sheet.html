@@ -94,20 +94,6 @@
   .guide a{ color:var(--teal); text-decoration:none; border-bottom:1px solid rgba(58,107,101,.35) }
   .guide a:hover{ color:var(--rose); border-color:var(--rose) }
   .guide strong{ color:var(--ink); font-weight:500; font-family:var(--mono); font-size:.9em; letter-spacing:.04em }
-  .coach{
-    position:fixed; left:50%; bottom:calc(2.8rem + env(safe-area-inset-bottom)); transform:translateX(-50%);
-    z-index:9; max-width:min(92vw,28rem); padding:.55rem .85rem;
-    font-family:var(--mono); font-size:.58rem; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--ink-soft); background:var(--paper-2); border:1px solid var(--rule);
-    display:flex; align-items:center; gap:.75rem; line-height:1.5;
-  }
-  .coach[hidden]{ display:none }
-  .coach button{
-    flex:0 0 auto; background:none; border:none; cursor:pointer; color:var(--rose);
-    font-family:var(--mono); font-size:.58rem; letter-spacing:.12em; text-transform:uppercase;
-    min-height:36px; padding:0 .2rem;
-  }
-  .coach button:hover{ color:var(--ink) }
 
   .stage{ width:100%; display:grid; grid-template-columns:2.2rem 1fr 2.2rem; align-items:center; gap:.2rem; }
   .nudge{
@@ -299,7 +285,7 @@
     .identity a{ display:inline-block; padding:.45rem 0 }
   }
   @media (max-height:500px) and (orientation:landscape){
-    .wordmark, .guide, .coach{ display:none }
+    .wordmark, .guide{ display:none }
     .deck{ --cw:clamp(200px,46vh,280px); height:calc(var(--ch) * 1.28); }
     .kicker{ padding:.15rem .2rem .35rem }
   }
@@ -313,7 +299,7 @@
   }
 </style>
 </head>
-<body class="dash" style="--ar:194;--ag:106;--ab:88">
+<body class="dash" style="--ar:58;--ag:107;--ab:101">
   <div class="wash" aria-hidden="true"></div>
   <div class="wvz" aria-hidden="true"></div>
 
@@ -327,16 +313,15 @@
   <main class="ops">
     <p class="wordmark">Stack Cartographer QC</p>
     <p class="guide" id="guide" aria-live="polite">
-      <span class="mem-tag">memory</span> · opponents this agent has faced. The live check is card 5 —
-      <a href="#public" id="guidePublic">Public</a>.
+      <span class="live-tag">live</span> · claimed seasons vs the arena right now. <strong>HOLD</strong> = still true. <strong>DRIFT</strong> = seasons moved on.
     </p>
 
     <div class="stage">
       <button type="button" class="nudge" data-dir="-1" aria-label="previous card">‹</button>
       <div class="deck" id="deck">
 
-        <article class="card panel field on channel" data-panel="field" style="--d:0" tabindex="0">
-          <span class="head tip" tabindex="0" data-tip="Saved opponent read — not live. Swipe to Public for HOLD / DRIFT.">Field</span>
+        <article class="card panel field channel" data-panel="field" style="--d:1" tabindex="0">
+          <span class="head tip" tabindex="0" data-tip="Saved opponent read — not live. This is memory.">Field</span>
           <span class="corner tl">F<span class="suit">&diams;</span></span>
           <span class="corner br">F<span class="suit">&diams;</span></span>
           <div class="sheet">
@@ -392,7 +377,7 @@
           </div>
         </article>
 
-        <article class="card panel public channel watching" data-panel="public" style="--d:-1" tabindex="0">
+        <article class="card panel public channel watching on" data-panel="public" style="--d:0" tabindex="0">
           <span class="head tip" tabindex="0" data-tip="The real canary: claimed seasons vs live arena list. HOLD or DRIFT.">Public</span>
           <span class="corner tl">C<span class="suit">&diams;</span></span>
           <span class="corner br">C<span class="suit">&diams;</span></span>
@@ -425,19 +410,13 @@
     </div>
 
     <div class="ticks" role="tablist" aria-label="channels">
-      <button type="button" class="tick channel on" data-panel="field" aria-label="Field"><span class="sr">Field</span></button>
+      <button type="button" class="tick channel" data-panel="field" aria-label="Field"><span class="sr">Field</span></button>
       <button type="button" class="tick channel" data-panel="ledger" aria-label="Ledger"><span class="sr">Ledger</span></button>
       <button type="button" class="tick channel" data-panel="replay" aria-label="Replay"><span class="sr">Replay</span></button>
       <button type="button" class="tick channel" data-panel="posture" aria-label="Posture"><span class="sr">Posture</span></button>
-      <button type="button" class="tick channel" data-panel="public" aria-label="Public"><span class="sr">Public</span></button>
+      <button type="button" class="tick channel on" data-panel="public" aria-label="Public"><span class="sr">Public</span></button>
     </div>
   </main>
-
-  <div class="coach" id="coach" hidden>
-    <span>Cards 1–4 are memory. Card 5 · Public is the live canary (HOLD / DRIFT).</span>
-    <button type="button" id="coachGo">show Public</button>
-    <button type="button" id="coachDismiss" aria-label="dismiss">got it</button>
-  </div>
 
   <footer>
     <a class="to-land" href="/">←&nbsp;boot</a>
@@ -455,7 +434,7 @@
     posture: [125, 90, 115],
     public:  [58, 107, 101]
   };
-  var active = "field";
+  var active = "public";
   var cards = Array.prototype.slice.call(document.querySelectorAll(".card"));
   var ticks = Array.prototype.slice.call(document.querySelectorAll(".tick"));
   var deck = document.getElementById("deck");
@@ -497,11 +476,10 @@
         location.hash = active;
       }
     } catch (e) {}
-    if (active === "public") hideCoach();
   }
 
   var GUIDE = {
-    field: '<span class="mem-tag">memory</span> · opponents this agent has faced. The live check is card 5 — <a href="#public" data-jump="public">Public</a>.',
+    field: '<span class="mem-tag">memory</span> · opponents this agent has faced. Snapshot — swipe back to <a href="#public" data-jump="public">Public</a> for the live check.',
     ledger: '<span class="mem-tag">memory</span> · how much has been recorded. Snapshot — not the live arena.',
     replay: '<span class="mem-tag">memory</span> · sample folds and raises. Snapshot — not the live arena.',
     posture: '<span class="mem-tag">memory</span> · how it likes to play. Snapshot — not the live arena.',
@@ -510,7 +488,7 @@
   var guideEl = document.getElementById("guide");
   function syncGuide(name) {
     if (!guideEl) return;
-    guideEl.innerHTML = GUIDE[name] || GUIDE.field;
+    guideEl.innerHTML = GUIDE[name] || GUIDE.public;
   }
   if (guideEl) {
     guideEl.addEventListener("click", function (e) {
@@ -521,39 +499,15 @@
     });
   }
 
-  function hideCoach() {
-    var coach = document.getElementById("coach");
-    if (coach) coach.hidden = true;
-    try { localStorage.setItem("sekats-coach-v1", "1"); } catch (e) {}
-  }
-  (function initCoach() {
-    var coach = document.getElementById("coach");
-    if (!coach) return;
-    var seen = false;
-    try { seen = localStorage.getItem("sekats-coach-v1") === "1"; } catch (e) {}
-    var deep = false;
-    try {
-      var h = (location.hash || "").replace(/^#/, "");
-      var q = new URLSearchParams(location.search).get("channel");
-      deep = ORDER.indexOf(h) >= 0 || ORDER.indexOf(q) >= 0;
-    } catch (e) {}
-    if (!seen && !deep) coach.hidden = false;
-    var go = document.getElementById("coachGo");
-    var dismiss = document.getElementById("coachDismiss");
-    if (go) go.addEventListener("click", function () { select("public"); hideCoach(); });
-    if (dismiss) dismiss.addEventListener("click", hideCoach);
-  })();
-
   (function initChannel() {
-    var pick = null;
+    var pick = "public";
     try {
       var h = (location.hash || "").replace(/^#/, "");
       var q = new URLSearchParams(location.search).get("channel");
       if (ORDER.indexOf(q) >= 0) pick = q;
       else if (ORDER.indexOf(h) >= 0) pick = h;
     } catch (e) {}
-    if (pick) select(pick);
-    else syncGuide(active);
+    select(pick);
   })();
 
   function step(dir) {

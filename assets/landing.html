@@ -188,40 +188,32 @@
   .punch .em{ color:var(--rose) }
   .punch .sub{ color:var(--ink-soft) }
   .lede{
-    margin:.55rem auto 0; max-width:36ch;
+    margin:.55rem auto 0; max-width:38ch;
     font-family:var(--grotesk); font-weight:300; font-size:clamp(.88rem,2vw,1rem);
     color:var(--ink-soft); line-height:1.55;
   }
+  .lede a{ color:var(--ink); text-decoration:none; border-bottom:1px solid var(--rule); }
+  .lede a:hover{ color:var(--rose); border-color:var(--rose) }
   .lede strong{ color:var(--ink); font-weight:500 }
   .lede .hold{ color:var(--sage); font-family:var(--mono); font-size:.85em; letter-spacing:.06em }
   .lede .drift{ color:var(--rose); font-family:var(--mono); font-size:.85em; letter-spacing:.06em }
 
-  /* one fact at a time — same disclosure axis as the cockpit channels */
-  .readout{ margin:.55rem auto 0; width:min(100%,36ch); min-height:2.6rem; }
-  .readout .row{ display:none; align-items:baseline; justify-content:center; gap:1.1rem; padding:.15rem 0; }
-  .readout .row.on{ display:flex; animation:rise .45s cubic-bezier(.2,.7,.2,1) both; }
-  @keyframes rise{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
-  .readout .k{ font-family:var(--mono); font-size:.56rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft); }
-  .readout .v{ font-family:var(--serif); font-weight:400; color:var(--ink); }
-  .readout .m{ font-family:var(--mono); color:var(--ink-faint); margin-left:.45rem; }
-  .readout .ticks{ display:flex; justify-content:center; gap:.1rem; margin-top:.45rem; }
-  .readout .tick{
-    width:44px; height:44px; padding:0; border:none; border-radius:0;
-    background:transparent; cursor:pointer; position:relative; touch-action:manipulation;
+  .legend{
+    list-style:none; margin:.85rem auto 0; padding:0; width:min(100%,34ch);
+    display:flex; flex-direction:column; gap:.45rem; text-align:left;
   }
-  .readout .tick::after{
-    content:""; position:absolute; left:50%; top:50%; width:7px; height:7px;
-    margin:-3.5px 0 0 -3.5px; border-radius:50%; background:var(--ink-faint); opacity:.45;
+  .legend li{
+    font-family:var(--grotesk); font-weight:300; font-size:.9rem; color:var(--ink-soft); line-height:1.45;
+    padding-left:0;
   }
-  .readout .tick.on::after{ background:var(--rose); opacity:1; }
-  .readout .tick:hover::after{ opacity:.85; }
-  .readout[data-held="true"] .tick.on::after{ box-shadow:0 0 0 3px var(--rose-2); }
+  .legend .tag{
+    display:inline-block; min-width:4.2em; margin-right:.45rem;
+    font-family:var(--mono); font-size:.78em; letter-spacing:.1em; font-weight:500;
+  }
+  .legend .tag.hold{ color:var(--sage) }
+  .legend .tag.drift{ color:var(--rose) }
 
-  .query{ font-family:var(--mono); font-size:.7rem; letter-spacing:.12em; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; gap:1rem; margin-top:.7rem; }
-  .cursor{ width:9px; height:15px; background:var(--rose); display:inline-block; animation:blink 1.1s steps(2) infinite; }
-  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:0} }
-
-  .enter{ margin-top:1.1rem; background:var(--paper-2); padding:1.05rem 1.6rem; width:min(100%,46ch); }
+  .enter{ margin-top:1.25rem; background:var(--paper-2); padding:1.05rem 1.6rem; width:min(100%,46ch); }
   .enter a{ display:flex; justify-content:space-between; align-items:center; font-family:var(--serif);
     font-size:clamp(1.05rem,2.6vw,1.6rem); font-weight:400; color:var(--ink); text-decoration:none; gap:1rem; }
   .enter a .arrow{ font-family:var(--grotesk); transition:transform .25s }
@@ -250,24 +242,20 @@
     .enter a{ min-height:44px }
   }
   @media (max-height:700px){
-    .query{ display:none }
     .hero-card{ margin:.5rem auto .65rem }
   }
   @media (prefers-reduced-motion:reduce){
     .hero-card .c3d{animation:none} .hero-card .back .bk-glyph,.hero-card .back .bk-tag{display:none}
-    .cursor{animation:none} .enter a .arrow{transform:none}
-    .readout .row.on{animation:none}
+    .enter a .arrow{transform:none}
     body.leaving .boot, body.leaving .foot-strip, body.leaving .kicker{transition:none; opacity:1; transform:none}
   }
 </style>
-<noscript><style>.readout .row{display:flex} .readout .ticks{display:none}</style></noscript>
 <div class="boot">
-    <!-- the frame: brand + intent only (status moved up to the kicker) -->
     <div class="hero-card" aria-hidden="true">
       <div class="c3d">
         <div class="face back">
           <span class="bk-glyph">◎</span>
-          <span class="bk-tag">sekats · rec · held</span>
+          <span class="bk-tag">sekats · canary</span>
         </div>
         <div class="face front">
           <span class="corner tl">63<span class="suit">&diams;</span></span>
@@ -278,35 +266,27 @@
     </div>
 
     <div class="wordmark">sekats<span class="dot">.</span></div>
-    <p class="punch">Not the poker bot — the <span class="em">watch</span> on its public contract.</p>
-    <p class="lede">This parlor asks the live arena: do the seasons this agent still claims actually exist? Match is <span class="hold">HOLD</span>. Miss is <span class="drift">DRIFT</span> (seasons rotated under it).</p>
+    <p class="punch">Checks whether a poker agent’s <span class="em">claimed seasons</span> still match the live arena.</p>
+    <p class="lede">This is <strong>not</strong> the poker bot.
+      <a href="https://arena.dev.fun/agent/cmq6mrfk002yzzc1k0sonovtw">stack_cartographer</a> plays on DevFun Arena.
+      This parlor only watches the public contract — no API key.</p>
 
-    <div class="readout" id="readout" data-held="false">
-      <div class="row on" data-pane="0"><span class="k">Subject</span><span class="v">stack_cartographer · plays elsewhere</span></div>
-      <div class="row" data-pane="1"><span class="k">This site</span><span class="v">canary · no API key</span></div>
-      <div class="row" data-pane="2"><span class="k">Verdict</span><span class="v">HOLD = seasons match · DRIFT = stale</span></div>
-      <div class="row" data-pane="3"><span class="k">Sheet</span><span class="v">cards 1–4 memory · card 5 is live</span></div>
-      <div class="ticks" role="tablist" aria-label="status facts">
-        <button type="button" class="tick on" data-pane="0" aria-label="Subject"></button>
-        <button type="button" class="tick" data-pane="1" aria-label="This site"></button>
-        <button type="button" class="tick" data-pane="2" aria-label="Verdict"></button>
-        <button type="button" class="tick" data-pane="3" aria-label="Sheet"></button>
-      </div>
-    </div>
-
-    <div class="query"><span class="cursor"></span><span>start&nbsp;on&nbsp;the&nbsp;sheet&nbsp;·&nbsp;or&nbsp;skip&nbsp;to&nbsp;the&nbsp;live&nbsp;check</span></div>
+    <ul class="legend" aria-label="verdicts">
+      <li><span class="tag hold">HOLD</span> claimed seasons are still live</li>
+      <li><span class="tag drift">DRIFT</span> the arena moved on — the process is stale</li>
+    </ul>
 
     <div class="enter">
-      <a href="/sheet" id="enterOps">
-        <span>Enter the operations</span>
+      <a href="/sheet#public" id="enterLive">
+        <span>See the live check</span>
         <span class="arrow">→</span>
       </a>
-      <div class="hint">opens Field (memory snapshot) · swipe or press 5 for Public</div>
+      <div class="hint">Public card · claimed vs arena right now</div>
     </div>
     <p class="alt">
-      <a href="/sheet#public">Skip to Public · HOLD / DRIFT</a><span class="sep">·</span>
+      <a href="/sheet#field">memory sheet</a><span class="sep">·</span>
       <a href="/check">check any agent</a><span class="sep">·</span>
-      <a href="/about">what is this?</a>
+      <a href="/about">about</a>
     </p>
   </div>
 
@@ -316,70 +296,16 @@
   </div>
 <script>
   (function () {
-    var root = document.getElementById("readout");
-    if (!root) return;
-    var rows = root.querySelectorAll(".row");
-    var ticks = root.querySelectorAll(".tick");
-    var n = rows.length;
-    var i = 0;
-    var held = false;
-    var resumeAt = 0;
     var reduce = false;
     try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
-    var CYCLE = 3200;
-    var HOLD_MS = 4200;
 
-    function show(next, fromUser) {
-      i = ((next % n) + n) % n;
-      Array.prototype.forEach.call(rows, function (r, idx) {
-        r.className = "row" + (idx === i ? " on" : "");
-      });
-      Array.prototype.forEach.call(ticks, function (t, idx) {
-        t.className = "tick" + (idx === i ? " on" : "");
-      });
-      if (fromUser) {
-        held = true;
-        root.setAttribute("data-held", "true");
-        resumeAt = Date.now() + HOLD_MS;
-      }
-    }
-
-    Array.prototype.forEach.call(ticks, function (t) {
-      t.addEventListener("click", function () {
-        show(parseInt(t.getAttribute("data-pane"), 10), true);
-      });
-    });
-    root.addEventListener("pointerenter", function () {
-      held = true;
-      root.setAttribute("data-held", "true");
-      resumeAt = Date.now() + HOLD_MS;
-    });
-    root.addEventListener("pointerleave", function () {
-      resumeAt = Date.now() + HOLD_MS;
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "ArrowRight") { show(i + 1, true); e.preventDefault(); }
-      if (e.key === "ArrowLeft") { show(i - 1, true); e.preventDefault(); }
-    });
-
-    if (!reduce) {
-      setInterval(function () {
-        if (held && Date.now() < resumeAt) return;
-        if (held && Date.now() >= resumeAt) {
-          held = false;
-          root.setAttribute("data-held", "false");
-        }
-        show(i + 1, false);
-      }, CYCLE);
-    }
-
-    var enter = document.getElementById("enterOps");
+    var enter = document.getElementById("enterLive");
     if (enter) {
       enter.addEventListener("click", function (e) {
         if (reduce) return;
         e.preventDefault();
         document.body.className += (document.body.className ? " " : "") + "leaving";
-        window.setTimeout(function () { window.location.href = enter.getAttribute("href"); }, 520);
+        window.setTimeout(function () { window.location.href = enter.getAttribute("href"); }, 420);
       });
     }
 
