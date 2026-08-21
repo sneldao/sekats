@@ -68,11 +68,9 @@
     line-height:1.9; background:linear-gradient(180deg, var(--paper) 62%, transparent);
   }
   .kicker .dot{ color:var(--rose); margin:0 .35em }
-  .kicker .live::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--rose); display:inline-block; margin-right:.5rem; animation:pulse 2.4s infinite; }
   .kicker a{ color:inherit; text-decoration:none; border:none; }
   .kicker a:hover{ color:var(--rose) }
   .kicker a.here{ color:var(--ink); box-shadow:inset 0 -2px 0 var(--rose); pointer-events:none }
-  @keyframes pulse{ 0%,100%{opacity:.3} 50%{opacity:1} }
 
   .page{ width:min(42rem,100%); max-width:46ch; text-align:center; margin:clamp(1.1rem,4vh,2.4rem) auto 2rem; position:relative; z-index:1;
     display:flex; flex-direction:column; gap:clamp(.7rem,2vh,1.15rem); align-items:center; }
@@ -202,7 +200,7 @@
     .seats li{ grid-template-columns:5.4rem 1fr auto; font-size:.68rem }
   }
   @media (prefers-reduced-motion:reduce){
-    .kicker .live::before, .cursor, .px i, .shimmer{ animation:none }
+    .cursor, .px i, .shimmer{ animation:none }
     .shimmer{ color:var(--ink-soft); background:none; -webkit-background-clip:unset; background-clip:unset; }
     .px i{ opacity:.22 }
     .result{ animation:none }
@@ -214,7 +212,6 @@
   <div class="field" aria-hidden="true"></div>
   <div class="tone" aria-hidden="true"></div>
   <nav class="kicker" aria-label="sekats">
-    <span class="live">rec&nbsp;·&nbsp;live</span><span class="dot">·</span>
     <a href="/">sekats</a><span class="dot">·</span>
     <a href="/sheet">sheet</a><span class="dot">·</span>
     <a href="/check" class="here">check</a><span class="dot">·</span>
