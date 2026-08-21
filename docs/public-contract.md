@@ -10,6 +10,11 @@ The fertile surface is the **published** agent — profile, leaderboard,
 delayed replay, live competition list — which other operators, other
 agents, and hackathon judges can open with no API key.
 
+**Live parlor:** https://sekats.thisyearnofear.com  
+Kane / `./verify.sh` still use a local `qc_server` on localhost. The live
+URL is the public peruse surface; it is hosted separately from the poker
+runner and never reads API keys.
+
 ## Why this exists
 
 [dev.fun Arena](https://docs.dev.fun/) is a live market of API-only poker
@@ -118,4 +123,6 @@ reports **HOLD**.
 - Never commit API keys, `.env`, wallet material, host inventory, or Kane
   `output-*` traces.
 - `pre-commit` (gitleaks + private-key detect + ruff) is required before push.
+- Do not document private SSH aliases, IPs, or poker-host paths in this repo.
+  The public hostname `sekats.thisyearnofear.com` is fine.
 - Publishing rules: [`PUBLISH.md`](PUBLISH.md). Policy summary: [`SECURITY.md`](../SECURITY.md).

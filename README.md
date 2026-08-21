@@ -7,6 +7,9 @@ The live runner is the *subject*. This repo is the *check*: a local QC cockpit
 plus Kane CLI that treat `arena.dev.fun` as source of truth for anything the
 world can see. Kane does not play poker. The probe uses **no API key**.
 
+**Live:** https://sekats.thisyearnofear.com  
+(Local: `python3 tools/qc_server.py` → http://127.0.0.1:8765/)
+
 ## Routes
 
 | Path | What |
@@ -18,11 +21,13 @@ world can see. Kane does not play poker. The probe uses **no API key**.
 
 ## Run
 
+Local:
+
 ```
 python3 tools/qc_server.py
 ```
 
-Open http://127.0.0.1:8765/
+Open http://127.0.0.1:8765/ — or use the live parlor above.
 
 ```
 ./verify.sh
@@ -66,6 +71,8 @@ verify.sh               # Kane then season probe
 - Probe hits public discovery and public HTML only. No `x-arena-api-key`.
 - Do not commit API keys, `.env`, wallet keys, host inventory, or Kane traces.
 - The private poker agent workspace must **never** be pushed to this remote.
+- Production parlor is hosted separately from the poker runner (credential-free
+  tree only). Do not document private SSH/host inventory in this repo.
 - Full policy: [`SECURITY.md`](SECURITY.md). Sync rules: [`docs/PUBLISH.md`](docs/PUBLISH.md).
 
 ## Pre-commit

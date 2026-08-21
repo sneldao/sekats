@@ -78,6 +78,10 @@ git push
 
 Leave `assets/contract.json` on **live** after demos (`./tools/demo_contract.sh live`).
 
+Production parlor: **https://sekats.thisyearnofear.com** — a separate host from
+the poker runner. Deploy only this publish tree; never credentials or ARCHIVE.
+Operator deploy steps live in the private agent workspace (`docs/PUBLISH.md`).
+
 ## Hard rules
 
 1. Never `git remote add` the public sekats URL to the private agent repo and push.
