@@ -65,4 +65,15 @@ verify.sh               # Kane then season probe
 - Do not commit API keys, `.env`, wallet keys, or host inventory.
 - The poker runner, VPS, and SQLite memory are a separate subject — not this app.
 
+## Pre-commit
+
+Hooks block private keys / secrets (gitleaks), fix trailing whitespace, and
+lint/format the Python probe (ruff).
+
+```
+pip install pre-commit   # once
+pre-commit install
+pre-commit run --all-files
+```
+
 Plan: [`docs/public-contract.md`](docs/public-contract.md).

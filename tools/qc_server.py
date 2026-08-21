@@ -16,6 +16,7 @@ Usage:
   python3 tools/qc_server.py
   python3 tools/qc_server.py --port 8765
 """
+
 from __future__ import annotations
 
 import argparse
@@ -155,7 +156,9 @@ def fetch_list_active() -> list[dict]:
 
 
 def fetch_seat(agent_id: str, competition_id: str) -> dict:
-    url = ARENA_AGENT_STATS.format(agent_id=agent_id) + f"?competitionId={competition_id}"
+    url = (
+        ARENA_AGENT_STATS.format(agent_id=agent_id) + f"?competitionId={competition_id}"
+    )
     data = curl_json(url)
     if not isinstance(data, dict):
         return {"status": "ABSENT", "rank": None, "submissions": 0}
@@ -231,7 +234,9 @@ def search_live_agents(query: str, live: list[dict]) -> list[dict]:
             agent = item.get("agent") or {}
             if not isinstance(agent, dict):
                 continue
-            score = match_score(query, agent.get("name") or "", agent.get("handle") or "")
+            score = match_score(
+                query, agent.get("name") or "", agent.get("handle") or ""
+            )
             if score is None or not agent.get("id"):
                 continue
             found.append(
@@ -257,8 +262,13 @@ def search_live_agents(query: str, live: list[dict]) -> list[dict]:
     for hit in hits:
         aid = hit["id"]
         prev = best_by_id.get(aid)
-        if prev is None or hit["score"] < prev["score"] or (
-            hit["score"] == prev["score"] and (hit.get("rank") or 9999) < (prev.get("rank") or 9999)
+        if (
+            prev is None
+            or hit["score"] < prev["score"]
+            or (
+                hit["score"] == prev["score"]
+                and (hit.get("rank") or 9999) < (prev.get("rank") or 9999)
+            )
         ):
             best_by_id[aid] = hit
     ranked = list(best_by_id.values())
@@ -271,7 +281,9 @@ def resolve_agent(raw: str, live: list[dict]) -> dict:
     text = (raw or "").strip()
     if not text:
         raise ValueError("paste a profile URL, id, or live name")
-    looks_direct = "://" in text or "/agent/" in text or bool(CUID_RE.match(text.strip("/")))
+    looks_direct = (
+        "://" in text or "/agent/" in text or bool(CUID_RE.match(text.strip("/")))
+    )
     if looks_direct:
         return {"id": parse_agent_ref(text), "matches": []}
     matches = search_live_agents(text, live)
@@ -282,7 +294,9 @@ def resolve_agent(raw: str, live: list[dict]) -> dict:
     return {"id": top[0]["id"] if len(top) == 1 else None, "matches": top}
 
 
-def competitions_from_stats(stats: dict, live_ids: set[str]) -> tuple[list[dict], list[dict]]:
+def competitions_from_stats(
+    stats: dict, live_ids: set[str]
+) -> tuple[list[dict], list[dict]]:
     live_seats: list[dict] = []
     history: list[dict] = []
     for item in stats.get("competitions") or []:
@@ -316,7 +330,9 @@ def fetch_identity(agent_id: str) -> dict:
     match = TITLE_RE.search(html or "")
     if match:
         title = unescape(re.sub(r"\s+", " ", match.group(1))).strip()
-    name = title.split(" entered", 1)[0].strip() if " entered" in title.lower() else title
+    name = (
+        title.split(" entered", 1)[0].strip() if " entered" in title.lower() else title
+    )
     handle = ""
     found = HANDLE_RE.search(html or "")
     if found:
@@ -418,7 +434,11 @@ def probe(*, agent_ref: str | None = None, claimed_raw: str | None = None) -> di
         history = []
         seat_source = rows
         missing = [
-            {"id": row.get("id") or "", "name": row.get("name") or "", "mode": row.get("mode")}
+            {
+                "id": row.get("id") or "",
+                "name": row.get("name") or "",
+                "mode": row.get("mode"),
+            }
             for row in rows
             if (row.get("id") or "") not in live_ids
         ]
@@ -547,10 +567,14 @@ class Handler(SimpleHTTPRequestHandler):
             body = json.dumps(payload).encode("utf-8")
             self.send_response(200)
         except ValueError as exc:
-            body = json.dumps({"ok": False, "error": str(exc), "verdict": "ERROR"}).encode("utf-8")
+            body = json.dumps(
+                {"ok": False, "error": str(exc), "verdict": "ERROR"}
+            ).encode("utf-8")
             self.send_response(400)
         except Exception as exc:
-            body = json.dumps({"ok": False, "error": str(exc), "verdict": "ERROR"}).encode("utf-8")
+            body = json.dumps(
+                {"ok": False, "error": str(exc), "verdict": "ERROR"}
+            ).encode("utf-8")
             self.send_response(502)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
@@ -560,10 +584,16 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="QC cockpit + live public-contract probe")
+    parser = argparse.ArgumentParser(
+        description="QC cockpit + live public-contract probe"
+    )
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
-    parser.add_argument("--probe-only", action="store_true", help="print probe JSON and exit")
-    parser.add_argument("--agent", help="agent id, arena.dev.fun profile URL, or live name")
+    parser.add_argument(
+        "--probe-only", action="store_true", help="print probe JSON and exit"
+    )
+    parser.add_argument(
+        "--agent", help="agent id, arena.dev.fun profile URL, or live name"
+    )
     parser.add_argument(
         "--claimed",
         help="comma-separated competition ids the runner still pins (omit for a field scan)",
@@ -571,7 +601,9 @@ def main() -> int:
     args = parser.parse_args()
     if args.probe_only:
         claimed_raw = args.claimed if args.claimed is not None else None
-        print(json.dumps(probe(agent_ref=args.agent, claimed_raw=claimed_raw), indent=2))
+        print(
+            json.dumps(probe(agent_ref=args.agent, claimed_raw=claimed_raw), indent=2)
+        )
         return 0
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     print(f"QC cockpit  http://127.0.0.1:{args.port}/", flush=True)

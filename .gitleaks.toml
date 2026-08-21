@@ -1,0 +1,18 @@
+# Gitleaks config for sekats (public canary — no API keys by design).
+title = "sekats"
+
+[extend]
+# Use default rules; we only add allowlists below.
+useDefault = true
+
+[allowlist]
+description = "Public arena IDs, demo contract paths, and intentional placeholders"
+paths = [
+  '''assets/contract(\.live|\.stale)?\.json$''',
+  '''tests/kane/.+_test\.md$''',
+]
+regexes = [
+  '''arena\.dev\.fun/agent/[a-z0-9]+''',
+  '''cm[a-z0-9]{20,}''',
+  '''seed_poker_eval_s1''',
+]

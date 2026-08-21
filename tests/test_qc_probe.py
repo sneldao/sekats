@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Network-free checks for the any-agent probe parsers."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -17,7 +18,9 @@ SPEC.loader.exec_module(qc)
 
 class ParseAgentRefTests(unittest.TestCase):
     def test_raw_id(self):
-        self.assertEqual(qc.parse_agent_ref("cmq6mrfk002yzzc1k0sonovtw"), "cmq6mrfk002yzzc1k0sonovtw")
+        self.assertEqual(
+            qc.parse_agent_ref("cmq6mrfk002yzzc1k0sonovtw"), "cmq6mrfk002yzzc1k0sonovtw"
+        )
 
     def test_profile_url(self):
         self.assertEqual(
