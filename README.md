@@ -36,7 +36,7 @@ Demo the closed loop:
 
 ```
 ./tools/demo_contract.sh stale   # Public → DRIFT
-./tools/demo_contract.sh live    # Public → HOLD
+./tools/demo_contract.sh live    # Public → HOLD  (leave it live after)
 ```
 
 Reload `/sheet` → Public after swapping.
@@ -55,15 +55,18 @@ assets/                 # parlor UI + contract.json (+ stale/live for the tape)
 tools/qc_server.py      # static server + credential-free /api/probe
 tools/demo_contract.sh  # swap claimed seasons for DRIFT ↔ HOLD
 docs/public-contract.md # plan + Kane invariants
-tests/kane/             # Kane browser suite
+docs/PUBLISH.md         # how to sync without leaking the private agent
+SECURITY.md             # what never ships
+tests/kane/             # Kane browser suite (_test.md only)
 verify.sh               # Kane then season probe
 ```
 
 ## Security
 
 - Probe hits public discovery and public HTML only. No `x-arena-api-key`.
-- Do not commit API keys, `.env`, wallet keys, or host inventory.
-- The poker runner, VPS, and SQLite memory are a separate subject — not this app.
+- Do not commit API keys, `.env`, wallet keys, host inventory, or Kane traces.
+- The private poker agent workspace must **never** be pushed to this remote.
+- Full policy: [`SECURITY.md`](SECURITY.md). Sync rules: [`docs/PUBLISH.md`](docs/PUBLISH.md).
 
 ## Pre-commit
 

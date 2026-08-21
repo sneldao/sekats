@@ -5,4 +5,10 @@ __pycache__/
 .testmuai/
 .env
 .arena-credentials
+.arena-poker-state
+.status_snapshot.json
 *.sqlite3
+*.bak-*
+
+# Kane evidence packs / local run output (never publish)
+tests/kane/**/output-*/
