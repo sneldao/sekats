@@ -1,0 +1,18 @@
+{
+  "test_id": "a230647a-4096-4bff-aa3f-b15974140b63",
+  "project_id": "01M0GB5N3X6P2CQB2T1H8X1QD6",
+  "folder_id": "01M0GB69APX1SXDVRHW06YV7AC",
+  "org_id": "3283191",
+  "session_name": "quality_surface",
+  "commit_id": "3730d6cb-5851-4aba-bb69-7be0f630b3de",
+  "testcase_id": "01M0H8NKGXT1A8F7B6E4TX1TBS",
+  "executions": [
+    {
+      "execution_id": "15f05d19-6627-4802-afae-2132c383500a",
+      "run_kind": "author",
+      "status": "passed",
+      "valid": true,
+      "at": "2026-08-21T04:19:26.117Z"
+    }
+  ]
+}

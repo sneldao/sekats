@@ -137,10 +137,26 @@ func (a *app) handleReviewAction(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	pending, accepted, rejected := a.reviewQueue.Counts()
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := a.tmpl.ExecuteTemplate(w, "review-row", item); err != nil {
-		log.Printf("render review-row: %v", err)
+	err = a.tmpl.ExecuteTemplate(w, "review-action-response", struct {
+		Item   review.Item
+		Counts struct {
+			Pending  int
+			Accepted int
+			Rejected int
+		}
+	}{
+		Item: item,
+		Counts: struct {
+			Pending  int
+			Accepted int
+			Rejected int
+		}{Pending: pending, Accepted: accepted, Rejected: rejected},
+	})
+	if err != nil {
+		log.Printf("render review-action-response: %v", err)
 	}
 }
 

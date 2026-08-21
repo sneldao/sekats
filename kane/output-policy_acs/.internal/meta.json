@@ -1,0 +1,18 @@
+{
+  "test_id": "94abaf1f-fc4a-42a6-88de-7f311ec7a892",
+  "project_id": "01M0GB5N3X6P2CQB2T1H8X1QD6",
+  "folder_id": "01M0GB69APX1SXDVRHW06YV7AC",
+  "org_id": "3283191",
+  "session_name": "policy_acs",
+  "commit_id": "eb91e47a-cdd6-4e66-9045-d65ce3077b8f",
+  "testcase_id": "01M0H8VGEW4DA7ZSMM5AFSW8VZ",
+  "executions": [
+    {
+      "execution_id": "a37d141f-4150-4a85-9dbe-a4792cf207ab",
+      "run_kind": "author",
+      "status": "passed",
+      "valid": true,
+      "at": "2026-08-21T04:22:48.355Z"
+    }
+  ]
+}

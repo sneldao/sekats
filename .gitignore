@@ -1,3 +1,7 @@
 /bin/
 *.log
 .DS_Store
+
+# Kane CLI run artifacts (evidence packs) — do not commit per kane-cli docs.
+# output-*_test.md directories ARE commit-safe and intentionally tracked.
+.testmuai/

@@ -1,0 +1,10 @@
+{{/* Response to an accept/reject POST: the updated row (swapped in place)
+     plus an out-of-band swap of the summary counters, so the Pending/
+     Accepted/Rejected totals never go stale relative to the row's own
+     verdict badge — see the "counters stay stale" bug Kane caught. */}}
+{{define "review-action-response"}}
+{{template "review-row" .Item}}
+<div id="review-counts" hx-swap-oob="true" class="grid" data-testid="review-counts">
+  {{template "review-counts-inner" .Counts}}
+</div>
+{{end}}
