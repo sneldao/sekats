@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#f2eee5" />
+<title>sekats — about</title>
+<meta name="description" content="sekats is a parlor that watches the public contract of a live poker agent: claimed seasons versus the arena, HOLD or DRIFT, Kane-gated." />
+<link rel="canonical" href="/about" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="sekats" />
+<meta property="og:title" content="sekats — about" />
+<meta property="og:description" content="A parlor that watches whether a poker agent is still the agent it claims to be." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="/about" />
+<meta property="og:image" content="/og.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="sekats — about" />
+<meta name="twitter:description" content="A parlor that watches whether a poker agent is still the agent it claims to be." />
+<meta name="twitter:image" content="/og.jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#f2eee4; --paper-2:#ece5d6; --paper-3:#e2d8c6;
+    --ink:#1d1a16; --ink-soft:#6f6a5e; --ink-faint:#a89b8c;
+    --rule:rgba(29,26,22,.12); --rule-strong:rgba(29,26,22,.3);
+    --rose:#c26a58; --sage:#5c6b52; --serif:"Fraunces",Georgia,serif;
+    --grotesk:"Space Grotesk","Helvetica Neue",sans-serif;
+    --mono:"IBM Plex Mono","Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{ background:var(--paper); color:var(--ink); font-family:var(--grotesk); font-weight:300;
+    margin:0; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding: max(clamp(1.2rem,3.5vh,2.4rem), env(safe-area-inset-top))
+             max(clamp(1.4rem,4vw,3.4rem), env(safe-area-inset-right))
+             max(3.2rem, calc(1.2rem + env(safe-area-inset-bottom)))
+             max(clamp(1.4rem,4vw,3.4rem), env(safe-area-inset-left));
+    overflow-x:hidden; overflow-y:auto; line-height:1.55;
+    -webkit-tap-highlight-color: transparent; }
+  body::after{
+    content:""; position:fixed; inset:-60vmax; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(5px 5px at 0 0, rgba(29,26,22,.15) 0 72%, transparent 100%),
+      radial-gradient(7px 7px at 50% 30%, rgba(181,143,58,.11) 0 72%, transparent 100%);
+    background-size:15px 15px;
+    -webkit-mask-image:radial-gradient(62% 62% at 50% 50%, #000 0 60%, transparent 94%);
+    mask-image:radial-gradient(62% 62% at 50% 50%, #000 0 60%, transparent 94%);
+    mix-blend-mode:overlay; opacity:.5;
+  }
+  .field{position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(130% 95% at 6% -8%, rgba(92,107,82,.14), transparent 52%),
+      radial-gradient(115% 100% at 100% 14%, rgba(125,90,115,.12), transparent 52%); }
+
+  .kicker{
+    position:sticky; top:0; z-index:8; margin:0 auto; padding:clamp(.55rem,1.6vh,1rem) 1rem clamp(.85rem,2vh,1.2rem);
+    text-align:center; max-width:min(100%,64ch);
+    font-family:var(--mono); font-size:clamp(.52rem,1.1vw,.62rem);
+    letter-spacing:.22em; text-transform:uppercase; color:var(--ink-soft);
+    line-height:1.9; background:linear-gradient(180deg, var(--paper) 62%, transparent);
+  }
+  .kicker .dot{ color:var(--rose); margin:0 .35em }
+  .kicker .live::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--rose); display:inline-block; margin-right:.5rem; animation:pulse 2.4s infinite; }
+  .kicker a{ color:inherit; text-decoration:none; border:none; }
+  .kicker a:hover{ color:var(--rose) }
+  .kicker a.here{ color:var(--ink); box-shadow:inset 0 -2px 0 var(--rose); pointer-events:none }
+  @keyframes pulse{ 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  .about{ width:min(42rem,100%); max-width:38ch; text-align:center; margin:clamp(1.2rem,4vh,2.4rem) auto 2rem; position:relative; z-index:1; }
+  .wordmark{ font-family:var(--serif); font-weight:500; font-size:clamp(1.45rem,3.2vw,1.9rem); letter-spacing:-.02em }
+  .wordmark .dot{ color:var(--rose) }
+  .punch{ margin:.35rem 0 0; font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(1.05rem,2.6vw,1.4rem); color:var(--ink); }
+  .punch .em{ color:var(--rose) }
+
+  .facts{ margin:2rem 0 0; display:flex; flex-direction:column; gap:1.6rem; text-align:left; }
+  .facts article{ padding:0 }
+  .facts .k{ font-family:var(--mono); font-size:.56rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:.35rem }
+  .facts p{ font-family:var(--serif); font-weight:300; font-size:1.05rem; color:var(--ink); margin:0 }
+  .facts a{ color:inherit; border-bottom:1px solid var(--rule-strong); text-decoration:none }
+  .facts a:hover{ color:var(--rose) }
+  .hold{ color:var(--sage) } .drift{ color:var(--rose) }
+
+  .enter{ margin:2.1rem auto 0; background:var(--paper-2); padding:1.05rem 1.6rem; width:min(100%,46ch); text-align:center }
+  .enter a{ display:flex; justify-content:space-between; align-items:center; min-height:44px;
+    font-family:var(--serif); font-size:clamp(1.05rem,2.6vw,1.45rem); color:var(--ink); text-decoration:none; gap:1rem; }
+  .enter a:hover .arrow{ transform:translateX(8px) }
+  .enter .arrow{ transition:transform .25s }
+
+  .foot-strip{ position:fixed; bottom:0; left:0; right:0; display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    padding:1.1rem max(clamp(1rem,3vw,2.4rem), env(safe-area-inset-right)) calc(1.1rem + env(safe-area-inset-bottom)) max(clamp(1rem,3vw,2.4rem), env(safe-area-inset-left));
+    font-family:var(--mono); font-size:.5rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint);
+    background:linear-gradient(0deg, var(--paper), transparent 30%); z-index:7; }
+  .foot-strip a{ color:inherit; text-decoration:none; border:none }
+  .foot-strip a:hover{ color:var(--rose) }
+
+  @media (max-width:660px){
+    .kicker{ letter-spacing:.12em; font-size:.5rem; padding:.4rem .4rem .65rem }
+    .about{ max-width:none }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .kicker .live::before{ animation:none }
+    .enter a .arrow{ transform:none }
+  }
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"sekats","applicationCategory":"DeveloperApplication","description":"A parlor that watches whether a poker agent is still the agent it claims to be.","offers":{"@type":"Offer","price":"0"}}
+</script>
+</head>
+<body>
+  <div class="field" aria-hidden="true"></div>
+  <nav class="kicker" aria-label="sekats">
+    <span class="live">rec&nbsp;·&nbsp;live</span><span class="dot">·</span>
+    <a href="/">sekats</a><span class="dot">·</span>
+    <a href="/sheet">sheet</a><span class="dot">·</span>
+    <a href="/check">check</a><span class="dot">·</span>
+    <a href="/about" class="here">about</a>
+  </nav>
+
+  <main class="about">
+    <div class="wordmark">sekats<span class="dot">.</span></div>
+    <p class="punch"><span class="em">stakes</span>, reversed — a device that watches whether a poker agent is still the agent it claims to be.</p>
+
+    <div class="facts">
+      <article>
+        <div class="k">the subject</div>
+        <p><a href="https://arena.dev.fun/agent/cmq6mrfk002yzzc1k0sonovtw">stack_cartographer</a> plays no-limit hold’em on <a href="https://arena.dev.fun/">DevFun Arena</a>. Hands, folds, and public chat belong to that runner. This parlor is not the player.</p>
+      </article>
+      <article>
+        <div class="k">the sheet</div>
+        <p>Five cards. Field, ledger, replay, and posture are a memory snapshot. <em>Public</em> is live: the seasons this process still believes, checked against the arena’s list. Match is <span class="hold">HOLD</span>. Miss is <span class="drift">DRIFT</span>.</p>
+      </article>
+      <article>
+        <div class="k">the check</div>
+        <p>Kane walks this parlor in a real browser. It does not sit in the twenty-second action clock. The probe uses no API key — only what the world can already see.</p>
+      </article>
+      <article>
+        <div class="k">any agent</div>
+        <p>The parlor is one specific demo. The canary is the check: paste a public profile, optionally the competition IDs a runner still pins, get <span class="hold">HOLD</span> or <span class="drift">DRIFT</span>. No key. Not an optimiser.</p>
+      </article>
+      <article>
+        <div class="k">device 01</div>
+        <p>Local, parlor-grade, one machine. Run <span style="font-family:var(--mono);font-size:.85em">python3 tools/qc_server.py</span> and watch the sheet — then ask Kane if the contract still holds.</p>
+      </article>
+    </div>
+
+    <div class="enter">
+      <a href="/sheet">
+        <span>Watch the sheet</span>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+    <div class="enter" style="margin-top:.7rem">
+      <a href="/check">
+        <span>Check any agent</span>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </main>
+
+  <div class="foot-strip">
+    <a href="/">sekats · boot</a>
+    <span>public canary</span>
+  </div>
+<script>
+(function(){
+  var origin = location.origin || "";
+  ["og:image","og:url","twitter:image"].forEach(function(prop){
+    var m = document.querySelector('meta[property="'+prop+'"], meta[name="'+prop+'"]');
+    if (m && m.content && m.content.charAt(0) === "/") m.content = origin + m.content;
+  });
+})();
+</script>
+</body>
+</html>

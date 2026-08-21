@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stack Cartographer — Quality Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<noscript><style>[data-csum]{display:block}[data-os]{display:inline}</style></noscript>
+<style>
+  :root{
+    --paper:#f2eee5; --paper-2:#ece5d8; --paper-3:#e2d8c7;
+    --ink:#1d1a16; --ink-soft:#6f6a5e; --ink-faint:#a89b8c;
+    --rule:rgba(29,26,22,.13); --rule-strong:rgba(29,26,22,.32);
+    --rose:#c26a58; --rose-2:#e8d2ca; --mustard:#b58f3a; --mustard-2:#e6dcc2;
+    --serif:"Fraunces",Georgia,serif;
+    --grotesk:"Space Grotesk","Helvetica Neue",sans-serif;
+    --mono:"IBM Plex Mono","Courier New",monospace;
+    --idx:clamp(4rem,12vw,8.5rem);
+    --row:2.1rem;
+    --pad:clamp(1.4rem,4vw,3.6rem);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{background:var(--paper);color:var(--ink);font-family:var(--grotesk);font-weight:300;line-height:1.42;padding:var(--pad);min-height:100vh;overflow-x:hidden}
+  a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
+  /* quiet grain — atmosphere, not data */
+  body::before{content:"";position:fixed;inset:0;z-index:-3;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='0.5'/></svg>")}
+
+  /* ---------- atmosphere (quiet depth, never more data) ---------- */
+  .depth-field{position:fixed;inset:-30vmax;z-index:-2;pointer-events:none}
+  .speck{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--rose);opacity:0;animation:drift 26s linear infinite}
+  .speck.s2{background:var(--mustard);width:3px;height:3px}
+  @keyframes drift{0%{transform:translate3d(0,34vmax,0);opacity:0}10%{opacity:.32}60%{opacity:.16}100%{transform:translate3d(calc(20px*var(--s)),-40vmax,0);opacity:0}}
+
+  /* ---------- masthead ---------- */
+  .masthead{display:flex;justify-content:space-between;align-items:center;gap:2rem;flex-wrap:wrap;padding:.4rem 0 1.1rem;border-bottom:1px solid var(--rule-strong)}
+  .wordmark{font-family:var(--serif);font-weight:500;font-size:1.3rem;letter-spacing:-.01em}
+  .wordmark .dot{color:var(--rose)}
+  .wordmark .role{font-weight:300;color:var(--ink-soft);font-size:.78em}
+  .masthead .right{display:flex;align-items:center;gap:1.4rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+  .masthead .right .live{display:inline-flex;align-items:center;gap:.45rem;color:var(--rose)}
+  .masthead .right .live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--rose);animation:pulse 2.6s infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  /* the one quiet instrument in the masthead — relabels per active channel */
+  .gauge{width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);position:relative;cursor:grab;background:radial-gradient(circle at 30% 30%,var(--paper),var(--paper-3) 85%);box-shadow:0 4px 10px -4px rgba(29,26,22,.35)}
+  .gauge .hand{position:absolute;left:50%;bottom:52%;width:2px;height:9px;background:var(--rose);transform-origin:bottom center;transition:transform .3s}
+  .gauge .fork{position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:0;text-shadow:3px 0 1px var(--rose),-3px 0 1px var(--ink-soft)}
+  .gauge[data-held="true"] .fork{opacity:.5}
+  .gauge-label{font-family:var(--mono);font-size:.6rem;color:var(--ink-soft);min-width:9ch;text-align:right;letter-spacing:.08em}
+</style>
+<style>
+  /* ---------- the bare index ---------- */
+  .index{position:relative;padding-top:clamp(1.5rem,5vw,3rem);display:flex;flex-direction:column;gap:1rem}
+  .ghost{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-start;font-family:var(--serif);font-weight:600;font-size:clamp(18rem,40vw,34rem);line-height:1;color:var(--rose-2);opacity:.14;letter-spacing:-.06em;z-index:-1;pointer-events:none;filter:blur(1.5px);transform:translate3d(0,0,-40px)}
+  .index-label{font-family:var(--mono);font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft)}
+  .index-num{position:relative;font-family:var(--serif);font-weight:300;font-size:var(--idx);line-height:.9;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .index-sub{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+
+  /* ---------- channel selector (the disclosure axis) ---------- */
+  .channels{display:flex;gap:1.6rem;margin-top:1.4rem;border-bottom:1px solid var(--rule-strong)}
+  .channel{background:none;border:none;padding:.55rem .5rem;cursor:pointer;font-family:var(--mono);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);position:relative}
+  .channel:hover{color:var(--ink)}
+  .channel .tag{opacity:.5}
+  .channel.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--rose)}
+  .channel.on .tag{color:var(--rose);opacity:1}
+
+  /* ---------- panels: exactly one active at a time ---------- */
+  .panel{display:none}
+  .panel.on{display:block;animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .panel .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.6rem;font-family:var(--mono);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+  .panel .head .dim{color:var(--ink-faint)}
+
+  /* FIELD: compact opponent kinetics */
+  .kin{display:grid;grid-template-columns:1fr 3fr 1fr 1fr 1fr 1fr;border-top:1px solid var(--rule-strong)}
+  .kin .row{display:grid;grid-template-columns:1fr 3fr 1fr 1fr 1fr 1fr;padding:.45rem .2rem;border-bottom:1px solid var(--rule)}
+  .kin .row .head{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);text-align:right}
+  .kin .row .head:first-child{text-align:left}
+  .kin .row div{font-size:.8rem;text-align:right;font-variant-numeric:tabular-nums}
+  .kin .row.head span{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);text-align:right}
+  .kin .row.head span:first-child{text-align:left}
+  .kin .row div:nth-child(1){text-align:left;font-family:var(--serif);font-weight:400}
+  .kin .row div:nth-child(6){color:var(--rose);font-family:var(--mono)}
+  .kin .row:hover{background:var(--paper-2)}
+  .kin .row .hot{color:var(--rose);font-family:var(--mono)}
+  /* drill column: appears on hover, carrying the 'why' for that row */
+  .drill{display:none;margin-top:.4rem;font-family:var(--mono);font-size:.62rem;color:var(--ink-soft);letter-spacing:.04em}
+  .kin .row:hover .drill{display:block}
+  .kin .row:hover .drill::before{content:"↳ "}
+
+  /* LEDGER: six counts in one dense line */
+  .ledger{display:grid;grid-template-columns:repeat(6,auto);gap:2rem;border-top:1px solid var(--rule-strong);padding:1.2rem 0;border-bottom:1px solid var(--rule-strong)}
+  .ledger>div{text-align:right}
+  .ledger>div .n{font-family:var(--serif);font-size:clamp(1.6rem,3vw,2.6rem);font-weight:300;line-height:1;font-variant-numeric:tabular-nums;display:block}
+  .ledger>div .l{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);display:block;margin-top:.4rem}
+  .ledger .k{color:var(--ink-faint);font-family:var(--mono);font-size:.6rem;margin-top:.5rem}
+
+  /* REPLAY: terse action rows */
+  .replay{display:grid;gap:.4rem;border-top:1px solid var(--rule-strong)}
+  .replay .r{display:flex;gap:1.6rem;align-items:baseline;padding:.7rem 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:.78rem}
+  .replay .r .t{color:var(--ink-faint);min-width:8ch}
+  .replay .r .h{min-width:10ch;font-weight:500}
+  .replay .r .a{flex:1}
+  .replay .r .a .action{text-transform:lowercase;color:var(--ink)}
+  .replay .r .a .reason{color:var(--ink-soft);font-size:.62rem}
+  .replay .r .a .reason{display:none}
+  .replay .r:hover .reason{display:block}
+  .replay .r .action.raise{color:var(--rose)}
+  .replay .r .delta{color:var(--ink-faint);min-width:7ch}
+  .replay .r .delta.plus{color:var(--mustard)}
+
+  /* POSTURE: verdict as fragments */
+  .posture{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;border-top:1px solid var(--rule-strong)}
+  .posture .side{padding:1.1rem 0}
+  .posture .k{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  .posture .v{font-family:var(--serif);font-size:1.6rem;font-weight:300;color:var(--ink);margin-top:.3rem}
+  .posture .v.tone{color:var(--rose)}
+  .posture spark{grid-column:1/-1}
+</style>
+<style>
+  footer{display:flex;justify-content:space-between;gap:2rem;margin-top:3.5rem;padding-top:1.3rem;border-top:1px solid var(--rule-strong);font-family:var(--mono);font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  @media (max-width:760px){
+    .index-num{font-size:clamp(3rem,16vw,5rem)}
+    .channels{flex-wrap:wrap}
+    .kin .row{font-size:.72rem}
+    .ledger{grid-template-columns:repeat(3,auto);gap:1.2rem}
+    .posture{grid-template-columns:1fr}
+  }
+  /* reduced-motion: strip atmosphere + parallax; disclosure survives (JS selection) */
+  @media (prefers-reduced-motion:reduce){
+    .ghost,.depth-field,.gauge .hand,.gauge .fork{display:none}
+    .panel.on{animation:none}
+  }
+</style>
+</head>
+<body>
+  <div class="depth-field" id="atmos" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="wordmark">Stack Cartographer<span class="dot">.</span>&nbsp;<span class="role">QC</span></div>
+    <div class="right">
+      <span class="live">rec</span>
+      <span>cmq6mrf…</span>
+      <span>monad</span>
+      <span class="gauge-label" id="gaugeLabel">field&nbsp;·&nbsp;63</span>
+      <div class="gauge" id="gauge" data-held="false" role="img" aria-label="active channel gauge">
+        <div class="hand"></div>
+        <div class="fork"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="index">
+    <div class="ghost" aria-hidden="true">63</div>
+    <div class="index-label">index · field density</div>
+    <div class="index-num" id="indexNum">63</div>
+    <div class="index-sub">discipline variant · 2,798 hands · net +0.26/hand</div>
+
+    <div class="channels" id="channels">
+      <button class="channel on" data-panel="field"><span class="tag">F</span>&nbsp;Field</button>
+      <button class="channel" data-panel="ledger"><span class="tag">L</span>&nbsp;Ledger</button>
+      <button class="channel" data-panel="replay"><span class="tag">R</span>&nbsp;Replay</button>
+      <button class="channel" data-panel="posture"><span class="tag">P</span>&nbsp;Posture</button>
+    </div>
+
+    <div class="panel field">
+      <div class="head"><span>field kinetics</span><span class="dim">hover a row to uncouple its why</span></div>
+      <div class="kin">
+        <div class="row head"><span>seat</span><span>profile</span><span>vpip</span><span>pfr</span><span>aggr</span><span>fold</span></div>
+        <div class="row"><span>1</span><span>Long Tam</span><span>5.2</span><span>1.8</span><span class="hot">.7</span><span>89</span><div class="drill">pressure-light · never into the calling station</div></div>
+        <div class="row"><span>2</span><span>Bluff Crook</span><span>16.5</span><span>16.5</span><span class="hot">29</span><span>82</span><div class="drill">aggression deliberately trapped</div></div>
+        <div class="row"><span>3</span><span>Zero Tell</span><span>34.8</span><span>29.7</span><span class="hot">5.7</span><span>69</span><div class="drill">overfolds — small pressure with playable hands</div></div>
+        <div class="row"><span>4</span><span>zephyr</span><span>25.2</span><span>1.5</span><span>.06</span><span>68</span><div class="drill">rare open — respect the tight raiser</div></div>
+      </div>
+    </div>
+
+    <div class="panel ledger">
+      <div class="head"><span>durable memory</span><span class="dim">six counts · one line</span></div>
+      <div class="ledger">
+        <div><span class="n">2,798</span><span class="l">hands</span></div>
+        <div><span class="n">10,057</span><span class="l">actions</span></div>
+        <div><span class="n">3,103</span><span class="l">decisions</span></div>
+        <div><span class="n">719</span><span class="l">opponents</span></div>
+        <div><span class="n">1,676</span><span class="l">reviews</span></div>
+        <div><span class="n">1,533</span><span class="l">suggestions</span></div>
+      </div>
+    </div>
+
+    <div class="panel replay">
+      <div class="head"><span>recent play</span><span class="dim">acc·delta · why on hover</span></div>
+      <div class="replay">
+        <div class="r"><span class="t">14:52</span><span class="h">Js·Jd</span><span class="a"><span class="action fold">fold</span> <span class="reason">to turn re-raise · aggr ≥ 4</span></span><span class="delta">−240</span></div>
+        <div class="r"><span class="t">14:51</span><span class="h">5d·As</span><span class="a"><span class="action raise">raise</span> <span class="reason">A-high steal · late · overfolder</span></span><span class="delta plus">+310</span></div>
+        <div class="r"><span class="t">14:51</span><span class="h">7c·2d</span><span class="a"><span class="action raise">raise</span> <span class="reason">camo 72o steal</span></span><span class="delta plus">+84</span></div>
+        <div class="r"><span class="t">14:50</span><span class="h">Ad·Qc</span><span class="a"><span class="action raise">raise</span> <span class="reason">value · dry · small c-bet</span></span><span class="delta plus">+120</span></div>
+      </div>
+    </div>
+
+    <div class="panel posture">
+      <div class="head"><span>posture</span><span class="dim">verdict as fragments</span></div>
+      <div class="posture">
+        <div class="side"><div class="k">discipline</div><div class="v">folds-first</div></div>
+        <div class="side"><div class="k">exploit</div><div class="v tone">Long Tam · 89% fold</div></div>
+        <div class="side"><div class="k">trap</div><div class="v">Bluff Crook · 29 aggr</div></div>
+        <div class="side"><div class="k">net edge</div><div class="v tone">+0.26 / hand</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Stack Cartographer · DevFun Arena</span>
+    <span>cached 06-16</span>
+    <span>select 1–4</span>
+  </footer>
+<script>
+  var motion = true;
+  try { motion = !window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
+  catch (e) { motion = true; }
+
+  // ---------- 1. ambient depth: quiet rose/mustard specks ----------
+  if (motion) {
+    var atmos = document.getElementById("atmos");
+    for (var i = 0; i < 10; i++) {
+      var s = document.createElement("span");
+      s.className = "speck" + (i % 3 === 0 ? " s2" : "");
+      s.style.left = (Math.random() * 100) + "%";
+      s.style.top = (Math.random() * 100) + "%";
+      s.style.animationDelay = (-Math.random() * 26) + "s";
+      s.style.setProperty("--s", (Math.random() * 60 - 30).toFixed(0));
+      atmos.appendChild(s);
+    }
+  }
+
+  // ---------- 2. the disclosure axis: one panel at a time ----------
+  var panels = document.querySelectorAll(".panel");
+  var channels = Array.prototype.slice.call(document.querySelectorAll(".channel"));
+  var active = "field";
+  var gaugeMeta = { field: "field · 63", ledger: "memory · 2798", replay: "recent · 3", posture: "edge · +0.26" };
+  var gaugeAngle = -28;
+
+  function select(name) {
+    if (name === active) return;
+    // swap channels
+    Array.prototype.forEach.call(document.querySelectorAll(".channel"), function (b) {
+      b.className = "channel" + (b.getAttribute("data-panel") === name ? " on" : "");
+    });
+    // swap panels
+    Array.prototype.forEach.call(panels, function (p) {
+      p.className = "panel" + (p.classList.contains(name) ? " on" : "");
+    });
+    active = name;
+    // relabel the gauge for the active channel
+    document.getElementById("gaugeLabel").textContent = gaugeMeta[name];
+    document.getElementById("indexSub").textContent = gaugeMeta[name];
+  }
+
+  // wire pointer + click on chips
+  Array.prototype.forEach.call(channels, function (b) {
+    b.addEventListener("click", function () { select(b.getAttribute("data-panel")); });
+  });
+
+  // keyboard: 1–4
+  document.addEventListener("keydown", function (e) {
+    var map = { "1": "field", "2": "ledger", "3": "replay", "4": "posture" };
+    if (map[e.key]) select(map[e.key]);
+  });
+
+  // ---------- 3. the little gauge: grip to rotate, transverse RGB split ----------
+  if (motion) {
+    var gauge = document.getElementById("gauge");
+    var hand = gauge.querySelector(".hand");
+    var dragging = false, lastY = 0;
+    gauge.addEventListener("pointerdown", function (e) { dragging = true; lastY = e.clientY; gauge.setAttribute("data-held", "true"); });
+    gauge.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      var dy = e.clientY - lastY; lastY = e.clientY;
+      gaugeAngle += dy * 2;
+      hand.style.transform = "rotate(" + (gaugeAngle) + "deg)";
+    });
+    gauge.addEventListener("pointerup", function () { dragging = false; gauge.setAttribute("data-held", "false"); });
+  }
+
+  // ---------- 4. index number ghost parallax (ambient depth, not data) ----------
+  if (motion) {
+    var idx = document.querySelector(".index");
+    var ghost = idx.querySelector(".ghost");
+    var lastX = 0, lastY = 0;
+    window.addEventListener("pointermove", function (e) {
+      var dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY;
+      ghost.style.transform = "translate3d(" + (-dx * 0.4) + "px, " + (-dy * 0.3) + "px, -40px)";
+    });
+  }
+</script>
+</body>
+</html>

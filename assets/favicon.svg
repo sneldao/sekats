@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="sekats">
+  <rect width="32" height="32" fill="#f2eee5"/>
+  <rect x="3.5" y="3.5" width="25" height="25" fill="none" stroke="#1d1a16" stroke-width="0.75" opacity="0.35"/>
+  <path fill="#c26a58" d="M16 7.2 24.2 16 16 24.8 7.8 16Z"/>
+</svg>

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#f2eee5" />
+<title>sekats — check</title>
+<meta name="description" content="Paste a public DevFun Arena agent. See where they sit. Pin claimed seasons for HOLD or DRIFT." />
+<link rel="canonical" href="/check" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="sekats" />
+<meta property="og:title" content="sekats — check" />
+<meta property="og:description" content="Paste a public arena agent. The arena answers. No key." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="/check" />
+<meta property="og:image" content="/og.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="sekats — check" />
+<meta name="twitter:description" content="Paste a public arena agent. The arena answers. No key." />
+<meta name="twitter:image" content="/og.jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#f2eee4; --paper-2:#ece5d6;
+    --ink:#1d1a16; --ink-soft:#6f6a5e; --ink-faint:#a89b8c;
+    --rule:rgba(29,26,22,.12); --rule-strong:rgba(29,26,22,.3);
+    --rose:#c26a58; --mustard:#b58f3a; --sage:#5c6b52;
+    --serif:"Fraunces",Georgia,serif;
+    --grotesk:"Space Grotesk","Helvetica Neue",sans-serif;
+    --mono:"IBM Plex Mono","Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{ background:var(--paper); color:var(--ink); font-family:var(--grotesk); font-weight:300;
+    margin:0; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding: max(clamp(1.2rem,3.5vh,2.4rem), env(safe-area-inset-top))
+             max(clamp(1.4rem,4vw,3.4rem), env(safe-area-inset-right))
+             max(3.4rem, calc(1.4rem + env(safe-area-inset-bottom)))
+             max(clamp(1.4rem,4vw,3.4rem), env(safe-area-inset-left));
+    overflow-x:hidden; overflow-y:auto; line-height:1.5;
+    -webkit-tap-highlight-color: transparent; }
+  body::after{
+    content:""; position:fixed; inset:-60vmax; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(5px 5px at 0 0, rgba(29,26,22,.15) 0 72%, transparent 100%),
+      radial-gradient(7px 7px at 50% 30%, rgba(181,143,58,.11) 0 72%, transparent 100%);
+    background-size:15px 15px;
+    -webkit-mask-image:radial-gradient(62% 62% at 50% 50%, #000 0 60%, transparent 94%);
+    mask-image:radial-gradient(62% 62% at 50% 50%, #000 0 60%, transparent 94%);
+    mix-blend-mode:overlay; opacity:.5;
+  }
+  .field{position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(130% 95% at 6% -8%, rgba(92,107,82,.14), transparent 52%),
+      radial-gradient(115% 100% at 100% 14%, rgba(125,90,115,.12), transparent 52%); }
+  .tone{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='0.5'/></svg>"); }
+
+  .kicker{
+    position:sticky; top:0; z-index:8; margin:0 auto; padding:clamp(.55rem,1.6vh,1rem) 1rem clamp(.85rem,2vh,1.2rem);
+    text-align:center; max-width:min(100%,64ch);
+    font-family:var(--mono); font-size:clamp(.52rem,1.1vw,.62rem);
+    letter-spacing:.22em; text-transform:uppercase; color:var(--ink-soft);
+    line-height:1.9; background:linear-gradient(180deg, var(--paper) 62%, transparent);
+  }
+  .kicker .dot{ color:var(--rose); margin:0 .35em }
+  .kicker .live::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--rose); display:inline-block; margin-right:.5rem; animation:pulse 2.4s infinite; }
+  .kicker a{ color:inherit; text-decoration:none; border:none; }
+  .kicker a:hover{ color:var(--rose) }
+  .kicker a.here{ color:var(--ink); box-shadow:inset 0 -2px 0 var(--rose); pointer-events:none }
+  @keyframes pulse{ 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  .page{ width:min(42rem,100%); max-width:46ch; text-align:center; margin:clamp(1.1rem,4vh,2.4rem) auto 2rem; position:relative; z-index:1;
+    display:flex; flex-direction:column; gap:clamp(.7rem,2vh,1.15rem); align-items:center; }
+  .wordmark{ font-family:var(--serif); font-weight:500; font-size:clamp(1.45rem,3.2vw,1.9rem); letter-spacing:-.02em }
+  .wordmark .dot{ color:var(--rose) }
+  .punch{ margin:0; font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(1.05rem,2.6vw,1.4rem); color:var(--ink); max-width:38ch; }
+  .punch .em{ color:var(--rose) }
+  body.held .punch{ display:none }
+
+  form{ width:100%; display:flex; flex-direction:column; align-items:center; gap:.7rem; }
+  .query{ display:flex; align-items:center; justify-content:center; gap:.7rem; width:min(100%,46ch); }
+  .cursor{ width:9px; height:15px; background:var(--rose); flex:0 0 9px; animation:blink 1.1s steps(2) infinite; }
+  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:0} }
+  body.held .cursor{ display:none }
+  .query input{
+    flex:1; min-width:0; background:transparent; border:0; border-bottom:1px solid var(--rule);
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.03em; color:var(--ink);
+    padding:.55rem 0; min-height:44px; border-radius:0;
+  }
+  .query input::placeholder{ color:var(--ink-faint); letter-spacing:.08em; }
+  .query input:focus{ outline:none; border-bottom-color:var(--rose) }
+  .hint{ margin:0; font-family:var(--mono); font-size:.52rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); }
+  .hint a{ color:inherit; text-decoration:none; border-bottom:1px solid var(--rule-strong) }
+  .hint a:hover{ color:var(--rose) }
+  body.held .hint{ display:none }
+
+  .result{ width:min(100%,36ch); text-align:center; animation:rise .45s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes rise{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+  .who{ font-family:var(--serif); font-weight:400; font-size:clamp(1.35rem,3.4vw,1.85rem); letter-spacing:-.02em; }
+  .hero{ font-family:var(--serif); font-weight:300; font-size:clamp(2.4rem,8vw,3.4rem); letter-spacing:-.04em; line-height:.9; margin:.15rem 0 0; }
+  .hero-k{ font-family:var(--mono); font-size:.56rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft); margin:.45rem 0 .85rem; }
+  .quote{ margin:0 0 1.05rem; font-family:var(--serif); font-style:italic; font-weight:300; font-size:.98rem; color:var(--ink-soft); }
+  .verdict{ font-family:var(--serif); font-weight:300; font-size:clamp(2.2rem,7vw,3.1rem); letter-spacing:-.03em; line-height:.9; }
+  .verdict[data-verdict="HOLD"]{ color:var(--sage) }
+  .verdict[data-verdict="DRIFT"], .verdict[data-verdict="ERROR"]{ color:var(--rose) }
+  .verdict[data-verdict="pending"], .verdict[data-verdict="PICK"]{ color:var(--ink-soft) }
+  .scan .verdict, .scan .hero{ display:none }
+  .pick .identity, .pick .pin-open, .pick .nudge{ display:none }
+  .contract .hero, .contract .quote, .contract .nudge{ display:none }
+  .contract .who{ font-size:clamp(1.05rem,2.4vw,1.25rem); color:var(--ink-soft); font-style:italic; margin-bottom:.35rem }
+  .result.watching .face{ display:none }
+  .watch{ display:none; align-items:center; justify-content:center; gap:.7rem; min-height:4.2rem; }
+  .result.watching .watch{ display:flex; }
+  .px{ display:grid; grid-template-columns:repeat(3,5px); gap:2px; flex:0 0 auto; }
+  .px i{ width:5px; height:5px; background:var(--ink); opacity:.14; animation:pixel-on 650ms ease-in-out infinite; }
+  .px i:nth-child(1){ animation-delay:90ms } .px i:nth-child(2){ animation-delay:180ms } .px i:nth-child(3){ animation-delay:270ms }
+  .px i:nth-child(4){ animation-delay:0ms } .px i:nth-child(5){ animation-delay:90ms } .px i:nth-child(6){ animation-delay:180ms }
+  .px i:nth-child(7){ animation-delay:90ms } .px i:nth-child(8){ animation-delay:180ms } .px i:nth-child(9){ animation-delay:270ms }
+  @keyframes pixel-on{ 0%,100%{opacity:.14} 45%,55%{opacity:1} }
+  .shimmer{
+    font-family:var(--mono); font-size:.62rem; letter-spacing:.12em; text-transform:uppercase;
+    background:linear-gradient(90deg, var(--ink-faint) 35%, var(--ink) 50%, var(--ink-faint) 65%);
+    background-size:200% 100%;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shimmer-text 1.4s linear infinite;
+  }
+  @keyframes shimmer-text{ 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+  .elapsed{ font-family:var(--mono); font-size:.62rem; color:var(--ink-faint); font-variant-numeric:tabular-nums; min-width:3.6ch; text-align:right; }
+
+  .tip{ position:relative; cursor:help; border-bottom:1px dotted var(--rule-strong); }
+  .tip::after{
+    content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + .4rem);
+    transform:translateX(-50%); width:max-content; max-width:22ch;
+    background:var(--ink); color:var(--paper);
+    font-family:var(--serif); font-style:italic; font-weight:300; font-size:.78rem;
+    letter-spacing:0; text-transform:none; line-height:1.35; padding:.45rem .65rem;
+    opacity:0; pointer-events:none; z-index:8; transition:opacity .15s;
+  }
+  .tip:hover::after, .tip:focus-visible::after, .tip.on::after{ opacity:1; }
+  .nudge{ margin:1.05rem auto 0; max-width:30ch; font-family:var(--serif); font-style:italic; font-size:.92rem; color:var(--ink-soft); }
+  .pin-note{ margin:.45rem 0 0; font-family:var(--serif); font-style:italic; font-size:.88rem; color:var(--ink-soft); text-align:left; }
+
+  .seats{ list-style:none; margin:0; padding:0; text-align:left; }
+  .seats li{ display:grid; grid-template-columns:6.4rem 1fr auto; gap:.7rem; align-items:baseline;
+    font-family:var(--mono); font-size:.72rem; padding:.28rem .1rem; }
+  .seats .mode{ color:var(--ink-faint); letter-spacing:.08em; text-transform:uppercase; font-size:.56rem; }
+  .seats .mark{ color:var(--ink) }
+  .seats li.gone .mark, .seats li.gone .sn{ color:var(--rose) }
+  .seats li.asked{ background:rgba(194,106,88,.07); }
+  .seats li.asked .sn{ color:var(--rose) }
+  .was{ margin-top:1.15rem; text-align:left; }
+  .was .k{ font-family:var(--mono); font-size:.52rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:.2rem; }
+  .picks{ list-style:none; margin:.4rem 0 0; padding:0; text-align:left; }
+  .picks button{
+    display:grid; grid-template-columns:1fr auto; gap:.7rem; width:100%;
+    background:none; border:0; border-bottom:1px solid var(--rule); padding:.7rem .1rem;
+    min-height:44px; cursor:pointer; text-align:left; color:inherit;
+  }
+  .picks .nm{ font-family:var(--serif); font-size:1.05rem; }
+  .picks .rk{ font-family:var(--mono); font-size:.68rem; color:var(--ink-soft); }
+  .live-inline{ list-style:none; margin:.85rem 0 0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:.15rem .75rem; }
+  .live-inline li{ font-family:var(--mono); font-size:.62rem; color:var(--ink-faint); letter-spacing:.06em; }
+  .identity{ margin-top:.9rem; }
+  .identity a{ font-family:var(--serif); font-size:.95rem; font-weight:300; color:inherit; text-decoration:none; border-bottom:1px solid var(--rule-strong) }
+  .identity a:hover{ color:var(--rose) }
+  .err{ color:var(--rose); font-family:var(--serif); font-style:italic; margin:.7rem 0 0; }
+
+  .pin-open, .pin-go{ background:none; border:0; padding:0; cursor:pointer; color:inherit; }
+  .pin-open{ margin-top:1.15rem; font-family:var(--serif); font-style:italic; font-size:.95rem; color:var(--ink-soft); min-height:44px; }
+  .pin-open:hover{ color:var(--rose) }
+  .pin{ width:100%; margin-top:.4rem; display:none; }
+  .pin.on{ display:block; }
+  .pin input{
+    width:100%; background:transparent; border:0; border-bottom:1px solid var(--rule);
+    font-family:var(--mono); font-size:.68rem; padding:.7rem 0; min-height:44px; color:var(--ink);
+  }
+  .pin input:focus{ outline:none; border-bottom-color:var(--rose) }
+  .enter{ margin-top:.85rem; background:var(--paper-2); padding:1.05rem 1.6rem; width:100%; }
+  .enter button{
+    display:flex; justify-content:space-between; align-items:center; width:100%; min-height:44px;
+    background:none; border:0; padding:0; cursor:pointer; gap:1rem;
+    font-family:var(--serif); font-size:clamp(1.05rem,2.6vw,1.35rem); color:var(--ink);
+  }
+  .enter button:hover .arrow{ transform:translateX(8px) }
+  .enter .arrow{ transition:transform .25s }
+
+  .foot-strip{ position:fixed; bottom:0; left:0; right:0; display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    padding:1.1rem max(clamp(1rem,3vw,2.4rem), env(safe-area-inset-right)) calc(1.1rem + env(safe-area-inset-bottom)) max(clamp(1rem,3vw,2.4rem), env(safe-area-inset-left));
+    font-family:var(--mono); font-size:.5rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint);
+    background:linear-gradient(0deg, var(--paper), transparent 30%); z-index:7; }
+  .foot-strip a{ color:inherit; text-decoration:none; border:none }
+  .foot-strip a:hover{ color:var(--rose) }
+
+  @media (max-width:660px){
+    .kicker{ letter-spacing:.12em; font-size:.5rem; padding:.4rem .4rem .65rem }
+    .page{ max-width:none }
+    .seats li{ grid-template-columns:5.4rem 1fr auto; font-size:.68rem }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .kicker .live::before, .cursor, .px i, .shimmer{ animation:none }
+    .shimmer{ color:var(--ink-soft); background:none; -webkit-background-clip:unset; background-clip:unset; }
+    .px i{ opacity:.22 }
+    .result{ animation:none }
+    .enter button .arrow{ transform:none }
+  }
+</style>
+</head>
+<body class="idle">
+  <div class="field" aria-hidden="true"></div>
+  <div class="tone" aria-hidden="true"></div>
+  <nav class="kicker" aria-label="sekats">
+    <span class="live">rec&nbsp;·&nbsp;live</span><span class="dot">·</span>
+    <a href="/">sekats</a><span class="dot">·</span>
+    <a href="/sheet">sheet</a><span class="dot">·</span>
+    <a href="/check" class="here">check</a><span class="dot">·</span>
+    <a href="/about">about</a>
+  </nav>
+
+  <main class="page">
+    <div class="wordmark">sekats<span class="dot">.</span></div>
+    <p class="punch">Paste a public agent. The arena <span class="em">answers</span>.</p>
+
+    <form id="checkForm">
+      <div class="query">
+        <span class="cursor" aria-hidden="true"></span>
+        <input id="agentInput" name="agent" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+          placeholder="url · id · or a live name" aria-label="Public agent URL, id, or name" />
+      </div>
+      <p class="hint">try <a href="/check?agent=cmq6mrfk002yzzc1k0sonovtw">stack_cartographer</a>
+        · field first · pin ids for HOLD / DRIFT</p>
+
+      <section class="result scan" id="result" hidden>
+        <div class="watch" id="watch" hidden role="status" aria-live="polite">
+          <span class="px" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="shimmer" id="watchLabel">watching the live field</span>
+          <span class="elapsed" id="watchTime">0.0s</span>
+        </div>
+        <div class="face" id="face">
+        <div class="who" id="who"></div>
+        <div class="verdict" id="verdict" data-verdict="pending"></div>
+        <div class="hero" id="heroMark"></div>
+        <div class="hero-k tip" id="heroK" tabindex="0" data-tip="Seasons still in the arena list where this agent has a rank."></div>
+        <p class="quote" id="quote"></p>
+        <ul class="seats" id="seatList"></ul>
+        <div class="was" id="historyWrap" hidden>
+          <div class="k tip" tabindex="0" data-tip="Ended seasons. Not the live contract.">was</div>
+          <ul class="seats" id="historyList"></ul>
+        </div>
+        <ul class="picks" id="pickList" hidden></ul>
+        <ul class="live-inline" id="liveList" hidden></ul>
+        <div class="identity"><a id="profileLink" href="https://arena.dev.fun/">open live profile</a></div>
+        <p class="err" id="err" hidden></p>
+        <p class="nudge" id="scanNudge" hidden>Where they sit on seasons that are still live. Pin the ids a runner still believes to get HOLD or DRIFT.</p>
+        <button type="button" class="pin-open" id="pinToggle">pin claimed seasons</button>
+        <div class="pin" id="pinBox">
+          <p class="pin-note">Match is HOLD. Miss is DRIFT — the season-rotation bug.</p>
+          <input id="claimedInput" name="claimed" autocomplete="off" spellcheck="false"
+            placeholder="competition ids the runner still pins" aria-label="Claimed competition ids" />
+          <div class="enter">
+            <button class="pin-go" type="submit">
+              <span>Watch HOLD / DRIFT</span>
+              <span class="arrow">→</span>
+            </button>
+          </div>
+        </div>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <div class="foot-strip">
+    <a href="/">sekats · boot</a>
+    <span id="footStamp">url · id · or a live name</span>
+  </div>
+<script>
+(function(){
+  var origin = location.origin || "";
+  ["og:image","og:url","twitter:image"].forEach(function(prop){
+    var m = document.querySelector('meta[property="'+prop+'"], meta[name="'+prop+'"]');
+    if (m && m.content && m.content.charAt(0) === "/") m.content = origin + m.content;
+  });
+
+  var form = document.getElementById("checkForm");
+  var agentInput = document.getElementById("agentInput");
+  var claimedInput = document.getElementById("claimedInput");
+  var result = document.getElementById("result");
+  var pinBox = document.getElementById("pinBox");
+  var pinToggle = document.getElementById("pinToggle");
+  var watch = document.getElementById("watch");
+  var watchLabel = document.getElementById("watchLabel");
+  var watchTime = document.getElementById("watchTime");
+  var asked = { season: "", arena: "" };
+  var watchTick = null;
+  var watchStep = null;
+
+  function parsePasted(raw) {
+    var text = (raw || "").trim();
+    var out = { id: text, season: "", arena: "", clean: text };
+    if (!text) return out;
+    try {
+      var href = text;
+      if (text.indexOf("://") === -1 && /arena\.dev\.fun\/agent\//.test(text)) href = "https://" + text.replace(/^\/+/, "");
+      if (text.indexOf("/agent/") !== -1 || text.indexOf("://") !== -1) {
+        var u = new URL(href);
+        var parts = u.pathname.split("/").filter(Boolean);
+        var i = parts.indexOf("agent");
+        if (i >= 0 && parts[i + 1]) {
+          out.id = parts[i + 1];
+          out.season = u.searchParams.get("season") || "";
+          out.arena = u.searchParams.get("arena") || "";
+          out.clean = "https://arena.dev.fun/agent/" + out.id;
+        }
+      }
+    } catch (e) {}
+    return out;
+  }
+  function modeWord(row) {
+    var m = (row && row.mode) || "";
+    if (m === "playground") return "play";
+    if (m === "tournament") return "tourney";
+    if (m === "eval") return "eval";
+    if (m === "ladder") return "ladder";
+    var n = ((row && row.name) || "").toLowerCase();
+    if (n.indexOf("playground") >= 0) return "play";
+    if (n.indexOf("tournament") >= 0) return "tourney";
+    if (n.indexOf("eval") >= 0) return "eval";
+    return "season";
+  }
+  function seasonNum(row) {
+    var blob = ((row && row.name) || "") + " " + ((row && row.id) || "");
+    var s = blob.match(/\bS(\d+)\b/i);
+    return s ? s[1] : "";
+  }
+  function seasonShort(row) {
+    var n = seasonNum(row);
+    return n ? "S" + n : (modeWord(row) || "—");
+  }
+  function seatMark(seat) {
+    if (!seat) return "—";
+    if (seat.rank != null && seat.field) return "#" + seat.rank + "/" + seat.field;
+    if (seat.rank != null) return "#" + seat.rank;
+    if (seat.status === "JOINED") return "in";
+    return "—";
+  }
+  function isAsked(row) {
+    if (!asked.season) return false;
+    if (String(seasonNum(row)) !== String(asked.season)) return false;
+    var a = (asked.arena || "").toLowerCase();
+    if (!a) return true;
+    if (a.indexOf("tournament") >= 0) return modeWord(row) === "tourney";
+    if (a.indexOf("playground") >= 0) return modeWord(row) === "play";
+    if (a.indexOf("eval") >= 0) return modeWord(row) === "eval";
+    return true;
+  }
+  function rankTip(row) {
+    var mode = modeWord(row);
+    var sn = seasonShort(row);
+    if (row && row.rank != null && row.field) {
+      return row.rank + " of " + row.field + " on " + mode + " " + sn;
+    }
+    if (row && row.rank != null) return "rank " + row.rank + " on " + mode + " " + sn;
+    return "";
+  }
+  function looksDirect(raw) {
+    var t = (raw || "").trim();
+    return /\/agent\//.test(t) || /^c[a-z0-9]{20,32}$/i.test(t);
+  }
+  function startWatch(query) {
+    var labels = looksDirect(query)
+      ? ["watching the live field", "reading public stats", "counting the field"]
+      : ["searching live boards", "reading public stats", "counting the field"];
+    var i = 0;
+    var t0 = Date.now();
+    result.classList.add("watching");
+    watch.hidden = false;
+    watchLabel.textContent = labels[0];
+    function tick() {
+      var s = (Date.now() - t0) / 1000;
+      watchTime.textContent = s < 60 ? s.toFixed(1) + "s" : Math.floor(s / 60) + "m " + (s % 60).toFixed(1) + "s";
+    }
+    tick();
+    if (watchTick) clearInterval(watchTick);
+    if (watchStep) clearInterval(watchStep);
+    watchTick = setInterval(tick, 100);
+    watchStep = setInterval(function () {
+      if (i < labels.length - 1) {
+        i += 1;
+        watchLabel.textContent = labels[i];
+      }
+    }, 2200);
+    var fs = document.getElementById("footStamp");
+    if (fs) fs.textContent = "watching";
+  }
+  function stopWatch() {
+    result.classList.remove("watching");
+    watch.hidden = true;
+    if (watchTick) clearInterval(watchTick);
+    if (watchStep) clearInterval(watchStep);
+    watchTick = watchStep = null;
+  }
+  function claimedParam() {
+    return claimedInput.value.replace(/[\s,;]+/g, ",").replace(/^,|,$/g, "");
+  }
+  function clearLists() {
+    document.getElementById("seatList").innerHTML = "";
+    document.getElementById("historyList").innerHTML = "";
+    document.getElementById("historyWrap").hidden = true;
+    document.getElementById("pickList").innerHTML = "";
+    document.getElementById("pickList").hidden = true;
+    document.getElementById("liveList").innerHTML = "";
+    document.getElementById("liveList").hidden = true;
+    document.getElementById("quote").textContent = "";
+    document.getElementById("err").hidden = true;
+    document.getElementById("err").textContent = "";
+    document.getElementById("profileLink").textContent = "open live profile";
+    var nudge = document.getElementById("scanNudge");
+    if (nudge) nudge.hidden = true;
+  }
+  function rowEl(row, mark, gone) {
+    var li = document.createElement("li");
+    if (gone) li.className = "gone";
+    if (isAsked(row)) li.classList.add("asked");
+    var mode = document.createElement("span");
+    mode.className = "mode";
+    mode.textContent = modeWord(row);
+    var sn = document.createElement("span");
+    sn.className = "sn";
+    sn.textContent = seasonShort(row);
+    var mk = document.createElement("span");
+    mk.className = "mark";
+    mk.textContent = mark;
+    var tip = rankTip(row);
+    if (tip) {
+      mk.className = "mark tip";
+      mk.tabIndex = 0;
+      mk.setAttribute("data-tip", tip);
+    }
+    li.appendChild(mode);
+    li.appendChild(sn);
+    li.appendChild(mk);
+    return li;
+  }
+  function render(data) {
+    stopWatch();
+    result.hidden = false;
+    document.body.className = "held";
+    clearLists();
+    var err = document.getElementById("err");
+    if (!data || data.ok === false) {
+      result.className = "result contract";
+      document.getElementById("who").textContent = "";
+      document.getElementById("heroK").textContent = "";
+      document.getElementById("verdict").textContent = "ERROR";
+      document.getElementById("verdict").setAttribute("data-verdict", "ERROR");
+      document.getElementById("profileLink").hidden = true;
+      err.hidden = false;
+      err.textContent = (data && data.error) || "probe failed";
+      return;
+    }
+    if (data.kind === "pick") {
+      result.className = "result pick";
+      document.getElementById("who").textContent = "several matches";
+      document.getElementById("heroK").textContent = "pick one";
+      document.getElementById("heroK").setAttribute("data-tip", "More than one live agent matched that name.");
+      document.getElementById("verdict").textContent = "";
+      var picks = document.getElementById("pickList");
+      picks.hidden = false;
+      (data.matches || []).forEach(function (m) {
+        var li = document.createElement("li");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        var nm = document.createElement("span");
+        nm.className = "nm";
+        nm.textContent = (m.name || m.handle || m.id) + (m.handle ? "  @" + m.handle : "");
+        var rk = document.createElement("span");
+        rk.className = "rk";
+        rk.textContent = seatMark(m);
+        btn.appendChild(nm);
+        btn.appendChild(rk);
+        btn.addEventListener("click", function () {
+          agentInput.value = m.profileUrl || m.id;
+          run(true);
+        });
+        li.appendChild(btn);
+        picks.appendChild(li);
+      });
+      return;
+    }
+    var kind = data.kind === "contract" ? "contract" : "scan";
+    result.className = "result " + kind;
+    var agent = data.agent || {};
+    document.getElementById("who").textContent = agent.name || agent.handle || "unknown";
+    if (agent.profileUrl && agent.id) agentInput.value = agent.profileUrl;
+    var verdict = data.verdict || "ERROR";
+    var vEl = document.getElementById("verdict");
+    vEl.textContent = kind === "contract" ? verdict : "";
+    vEl.setAttribute("data-verdict", kind === "contract" ? verdict : "pending");
+    var seats = data.seats || [];
+    var heroK = document.getElementById("heroK");
+    if (kind === "scan") {
+      heroK.textContent = seats.length
+        ? (seats.length + " live season" + (seats.length === 1 ? "" : "s"))
+        : "not on the live field";
+      heroK.setAttribute("data-tip", "Seasons still in the arena list where this agent has a rank.");
+      document.getElementById("quote").textContent = agent.quote ? "“" + agent.quote + "”" : "";
+    }
+    var missingIds = {};
+    (data.missing || []).forEach(function (m) { missingIds[m.id] = true; });
+    var list = document.getElementById("seatList");
+    if (kind === "scan") {
+      seats.forEach(function (row) { list.appendChild(rowEl(row, seatMark(row), false)); });
+    } else {
+      var seatById = {};
+      seats.forEach(function (s) { if (s && s.id) seatById[s.id] = s; });
+      (data.claimed || []).forEach(function (row) {
+        var seat = seatById[row.id] || row;
+        list.appendChild(rowEl(seat, seatMark(seat), !!missingIds[row.id]));
+      });
+    }
+    var hist = data.history || [];
+    var wrap = document.getElementById("historyWrap");
+    var histList = document.getElementById("historyList");
+    if (kind === "scan" && hist.length) {
+      wrap.hidden = false;
+      hist.forEach(function (row) { histList.appendChild(rowEl(row, seatMark(row), false)); });
+    }
+    var live = document.getElementById("liveList");
+    if (kind === "contract") {
+      live.hidden = false;
+      (data.live || []).forEach(function (row) {
+        var li = document.createElement("li");
+        li.textContent = modeWord(row) + " " + seasonShort(row);
+        live.appendChild(li);
+      });
+    }
+    var link = document.getElementById("profileLink");
+    link.hidden = false;
+    if (agent.profileUrl) link.href = agent.profileUrl;
+    link.textContent = agent.handle ? "@" + agent.handle : "open live profile";
+    pinToggle.textContent = kind === "contract" ? "claimed seasons" : "pin claimed seasons";
+    var nudge = document.getElementById("scanNudge");
+    if (nudge) nudge.hidden = kind !== "scan";
+    var fs = document.getElementById("footStamp");
+    if (fs) {
+      fs.textContent = kind === "scan"
+        ? ((data.seatVerdict || "").toLowerCase())
+        : (verdict + " · " + (data.seatVerdict || "").toLowerCase());
+    }
+  }
+  function run(push) {
+    var parsed = parsePasted(agentInput.value);
+    if (!parsed.id) return;
+    asked.season = parsed.season;
+    asked.arena = parsed.arena;
+    if (parsed.clean && parsed.clean !== agentInput.value.trim() && parsed.clean.indexOf("/agent/") !== -1) {
+      agentInput.value = parsed.clean;
+    }
+    var claimed = claimedParam();
+    var q = new URLSearchParams();
+    q.set("agent", parsed.id);
+    if (claimed) q.set("claimed", claimed);
+    if (push) history.replaceState(null, "", "/check?" + q.toString());
+    result.hidden = false;
+    document.body.className = "held";
+    clearLists();
+    startWatch(parsed.id);
+    fetch("/api/probe?" + q.toString())
+      .then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function () { render({ ok: false, error: "probe unreachable" }); });
+  }
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    run(true);
+  });
+  agentInput.addEventListener("paste", function () {
+    window.setTimeout(function () { run(true); }, 0);
+  });
+  pinToggle.addEventListener("click", function () {
+    pinBox.classList.toggle("on");
+    if (pinBox.classList.contains("on")) claimedInput.focus();
+  });
+  var coarse = false;
+  try { coarse = window.matchMedia("(hover: none)").matches; } catch (e) {}
+  if (coarse) {
+    document.addEventListener("click", function (e) {
+      var t = e.target.closest ? e.target.closest(".tip") : null;
+      Array.prototype.forEach.call(document.querySelectorAll(".tip.on"), function (el) {
+        if (el !== t) el.classList.remove("on");
+      });
+      if (t) t.classList.toggle("on");
+    });
+  }
+  var params = new URLSearchParams(location.search);
+  if (params.get("agent")) {
+    agentInput.value = params.get("agent");
+    if (params.get("claimed")) {
+      claimedInput.value = params.get("claimed").replace(/,/g, " ");
+      pinBox.classList.add("on");
+    }
+    run(false);
+  } else {
+    agentInput.focus();
+  }
+})();
+</script>
+</body>
+</html>

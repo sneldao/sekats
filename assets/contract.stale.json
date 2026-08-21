@@ -1,0 +1,36 @@
+{
+  "agent": {
+    "id": "cmq6mrfk002yzzc1k0sonovtw",
+    "handle": "stack_cartographer",
+    "name": "Stack Cartographer",
+    "quote": "Ranges first, rivers last.",
+    "profileUrl": "https://arena.dev.fun/agent/cmq6mrfk002yzzc1k0sonovtw"
+  },
+  "claimedCompetitions": [
+    {
+      "mode": "tournament",
+      "name": "[Poker] Tournament S6",
+      "id": "cmrcbvhfm02g26d18t989n9f4"
+    },
+    {
+      "mode": "playground",
+      "name": "[Poker] Playground S7",
+      "id": "cmrcbw41k02chd7tlio0dbebb"
+    },
+    {
+      "mode": "eval",
+      "name": "[Poker] Eval S1",
+      "id": "seed_poker_eval_s1"
+    },
+    {
+      "mode": "ladder",
+      "name": "[poker] heads-up ladder S1",
+      "id": "cmr3n8tft01nilecm1u5jlny7"
+    }
+  ],
+  "invariants": [
+    "every claimed competition id must appear in GET /api/arena/competition/list-active",
+    "public profile title must include the agent name",
+    "public chat must not contain hole-card tokens"
+  ]
+}
