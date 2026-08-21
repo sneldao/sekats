@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#f2eee5" />
 <title>sekats — Stack Cartographer</title>
-<meta name="description" content="A parlor that watches whether a poker agent is still the agent it claims to be." />
+<meta name="description" content="sekats watches whether a poker agent’s claimed seasons still match the live DevFun Arena. HOLD or DRIFT — no API key." />
 <link rel="canonical" href="/" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="manifest" href="/site.webmanifest" />
 <meta property="og:site_name" content="sekats" />
-<meta property="og:title" content="sekats — Stack Cartographer" />
-<meta property="og:description" content="A parlor that watches whether a poker agent is still the agent it claims to be." />
+<meta property="og:title" content="sekats — public contract canary" />
+<meta property="og:description" content="Not the poker bot — a parlor that checks claimed seasons against the live arena. HOLD or DRIFT." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="/" />
 <meta property="og:image" content="/og.jpg" />
@@ -187,6 +187,14 @@
   .punch{ margin:.15rem 0 0; font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(1.05rem,2.6vw,1.45rem); color:var(--ink); }
   .punch .em{ color:var(--rose) }
   .punch .sub{ color:var(--ink-soft) }
+  .lede{
+    margin:.55rem auto 0; max-width:36ch;
+    font-family:var(--grotesk); font-weight:300; font-size:clamp(.88rem,2vw,1rem);
+    color:var(--ink-soft); line-height:1.55;
+  }
+  .lede strong{ color:var(--ink); font-weight:500 }
+  .lede .hold{ color:var(--sage); font-family:var(--mono); font-size:.85em; letter-spacing:.06em }
+  .lede .drift{ color:var(--rose); font-family:var(--mono); font-size:.85em; letter-spacing:.06em }
 
   /* one fact at a time — same disclosure axis as the cockpit channels */
   .readout{ margin:.55rem auto 0; width:min(100%,36ch); min-height:2.6rem; }
@@ -219,6 +227,13 @@
   .enter a .arrow{ font-family:var(--grotesk); transition:transform .25s }
   .enter a:hover .arrow{ transform:translateX(8px) }
   .enter .hint{ font-family:var(--mono); font-size:.54rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); margin-top:.55rem; }
+  .alt{
+    margin:.85rem 0 0; font-family:var(--mono); font-size:.58rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-faint); line-height:1.8;
+  }
+  .alt a{ color:var(--ink-soft); text-decoration:none; border-bottom:1px solid var(--rule); }
+  .alt a:hover{ color:var(--rose); border-color:var(--rose) }
+  .alt .sep{ color:var(--rose); margin:0 .45em }
 
   body.leaving .boot, body.leaving .foot-strip{
     opacity:0; transform:translateY(12px);
@@ -263,35 +278,41 @@
     </div>
 
     <div class="wordmark">sekats<span class="dot">.</span></div>
-    <p class="punch">An agent that <span class="em">records itself</span> while it <span class="em">plays poker</span> — <span class="sub">quiet, disciplined, always auditing.</span></p>
+    <p class="punch">Not the poker bot — the <span class="em">watch</span> on its public contract.</p>
+    <p class="lede">This parlor asks the live arena: do the seasons this agent still claims actually exist? Match is <span class="hold">HOLD</span>. Miss is <span class="drift">DRIFT</span> (seasons rotated under it).</p>
 
     <div class="readout" id="readout" data-held="false">
-      <div class="row on" data-pane="0"><span class="k">Agent</span><span class="v">stack_cartographer</span></div>
-      <div class="row" data-pane="1"><span class="k">Game</span><span class="v">texas hold&rsquo;em · s14 / s15</span></div>
-      <div class="row" data-pane="2"><span class="k">Canary</span><span class="v">public contract <span class="m">kane-gated</span></span></div>
-      <div class="row" data-pane="3"><span class="k">Posture</span><span class="v">folds-first · seasons must match live</span></div>
+      <div class="row on" data-pane="0"><span class="k">Subject</span><span class="v">stack_cartographer · plays elsewhere</span></div>
+      <div class="row" data-pane="1"><span class="k">This site</span><span class="v">canary · no API key</span></div>
+      <div class="row" data-pane="2"><span class="k">Verdict</span><span class="v">HOLD = seasons match · DRIFT = stale</span></div>
+      <div class="row" data-pane="3"><span class="k">Sheet</span><span class="v">cards 1–4 memory · card 5 is live</span></div>
       <div class="ticks" role="tablist" aria-label="status facts">
-        <button type="button" class="tick on" data-pane="0" aria-label="Agent"></button>
-        <button type="button" class="tick" data-pane="1" aria-label="Game"></button>
-        <button type="button" class="tick" data-pane="2" aria-label="Canary"></button>
-        <button type="button" class="tick" data-pane="3" aria-label="Posture"></button>
+        <button type="button" class="tick on" data-pane="0" aria-label="Subject"></button>
+        <button type="button" class="tick" data-pane="1" aria-label="This site"></button>
+        <button type="button" class="tick" data-pane="2" aria-label="Verdict"></button>
+        <button type="button" class="tick" data-pane="3" aria-label="Sheet"></button>
       </div>
     </div>
 
-    <div class="query"><span class="cursor"></span><span>awaiting&nbsp;you&nbsp;·&nbsp;what&nbsp;do&nbsp;you&nbsp;want&nbsp;to&nbsp;see?</span></div>
+    <div class="query"><span class="cursor"></span><span>start&nbsp;on&nbsp;the&nbsp;sheet&nbsp;·&nbsp;or&nbsp;skip&nbsp;to&nbsp;the&nbsp;live&nbsp;check</span></div>
 
     <div class="enter">
-      <a href="/sheet">
+      <a href="/sheet" id="enterOps">
         <span>Enter the operations</span>
         <span class="arrow">→</span>
       </a>
-      <div class="hint">quality control · a row holds the why</div>
+      <div class="hint">opens Field (memory snapshot) · swipe or press 5 for Public</div>
     </div>
+    <p class="alt">
+      <a href="/sheet#public">Skip to Public · HOLD / DRIFT</a><span class="sep">·</span>
+      <a href="/check">check any agent</a><span class="sep">·</span>
+      <a href="/about">what is this?</a>
+    </p>
   </div>
 
   <div class="foot-strip">
     <span class="frac">sekats <span class="rhythm">·</span> public canary</span>
-    <span class="est">parlor-grade · <span class="rhythm">watching the sheet</span></span>
+    <span class="est">not the player · <span class="rhythm">watching the contract</span></span>
   </div>
 <script>
   (function () {
@@ -352,7 +373,7 @@
       }, CYCLE);
     }
 
-    var enter = document.querySelector(".enter a");
+    var enter = document.getElementById("enterOps");
     if (enter) {
       enter.addEventListener("click", function (e) {
         if (reduce) return;

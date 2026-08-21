@@ -77,8 +77,12 @@
   .wordmark{ font-family:var(--serif); font-weight:500; font-size:clamp(1.45rem,3.2vw,1.9rem); letter-spacing:-.02em }
   .wordmark .dot{ color:var(--rose) }
   .punch{ margin:0; font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(1.05rem,2.6vw,1.4rem); color:var(--ink); max-width:38ch; }
-  .punch .em{ color:var(--rose) }
-  body.held .punch{ display:none }
+  .punch .em{ color:var(--rose); font-style:normal; font-family:var(--mono); font-size:.82em; letter-spacing:.06em }
+  .lede-check{
+    margin:.35rem 0 0; max-width:36ch;
+    font-family:var(--grotesk); font-weight:300; font-size:.88rem; color:var(--ink-soft); line-height:1.5;
+  }
+  body.held .punch, body.held .lede-check{ display:none }
 
   form{ width:100%; display:flex; flex-direction:column; align-items:center; gap:.7rem; }
   .query{ display:flex; align-items:center; justify-content:center; gap:.7rem; width:min(100%,46ch); }
@@ -220,7 +224,8 @@
 
   <main class="page">
     <div class="wordmark">sekats<span class="dot">.</span></div>
-    <p class="punch">Paste a public agent. The arena <span class="em">answers</span>.</p>
+    <p class="punch">Paste any public Arena agent. See where they sit — or pin claimed seasons for <span class="em">HOLD</span> / <span class="em">DRIFT</span>.</p>
+    <p class="lede-check">This is not the poker bot. It only reads public pages and the live season list. No API key.</p>
 
     <form id="checkForm">
       <div class="query">
@@ -229,7 +234,7 @@
           placeholder="url · id · or a live name" aria-label="Public agent URL, id, or name" />
       </div>
       <p class="hint">try <a href="/check?agent=cmq6mrfk002yzzc1k0sonovtw">stack_cartographer</a>
-        · field first · pin ids for HOLD / DRIFT</p>
+        · see seats first · pin competition ids for HOLD / DRIFT</p>
 
       <section class="result scan" id="result" hidden>
         <div class="watch" id="watch" hidden role="status" aria-live="polite">

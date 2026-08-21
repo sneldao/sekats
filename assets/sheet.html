@@ -83,7 +83,31 @@
   .kicker a.here{color:var(--ink);box-shadow:inset 0 -2px 0 var(--rose);pointer-events:none}
 
   .ops{flex:1 1 auto; width:min(960px,100%); min-height:0; display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative; z-index:1;}
-  .wordmark{font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(1rem,2vw,1.2rem); color:var(--ink-soft); margin-bottom:.4rem}
+  .wordmark{font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(1rem,2vw,1.2rem); color:var(--ink-soft); margin-bottom:.15rem}
+  .guide{
+    max-width:42ch; margin:0 auto .55rem; text-align:center;
+    font-family:var(--grotesk); font-weight:300; font-size:clamp(.78rem,1.8vw,.92rem);
+    color:var(--ink-soft); line-height:1.45; min-height:2.6em;
+  }
+  .guide .live-tag{ font-family:var(--mono); font-size:.72em; letter-spacing:.08em; text-transform:uppercase; color:var(--teal) }
+  .guide .mem-tag{ font-family:var(--mono); font-size:.72em; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint) }
+  .guide a{ color:var(--teal); text-decoration:none; border-bottom:1px solid rgba(58,107,101,.35) }
+  .guide a:hover{ color:var(--rose); border-color:var(--rose) }
+  .guide strong{ color:var(--ink); font-weight:500; font-family:var(--mono); font-size:.9em; letter-spacing:.04em }
+  .coach{
+    position:fixed; left:50%; bottom:calc(2.8rem + env(safe-area-inset-bottom)); transform:translateX(-50%);
+    z-index:9; max-width:min(92vw,28rem); padding:.55rem .85rem;
+    font-family:var(--mono); font-size:.58rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-soft); background:var(--paper-2); border:1px solid var(--rule);
+    display:flex; align-items:center; gap:.75rem; line-height:1.5;
+  }
+  .coach[hidden]{ display:none }
+  .coach button{
+    flex:0 0 auto; background:none; border:none; cursor:pointer; color:var(--rose);
+    font-family:var(--mono); font-size:.58rem; letter-spacing:.12em; text-transform:uppercase;
+    min-height:36px; padding:0 .2rem;
+  }
+  .coach button:hover{ color:var(--ink) }
 
   .stage{ width:100%; display:grid; grid-template-columns:2.2rem 1fr 2.2rem; align-items:center; gap:.2rem; }
   .nudge{
@@ -275,7 +299,7 @@
     .identity a{ display:inline-block; padding:.45rem 0 }
   }
   @media (max-height:500px) and (orientation:landscape){
-    .wordmark{ display:none }
+    .wordmark, .guide, .coach{ display:none }
     .deck{ --cw:clamp(200px,46vh,280px); height:calc(var(--ch) * 1.28); }
     .kicker{ padding:.15rem .2rem .35rem }
   }
@@ -302,13 +326,17 @@
 
   <main class="ops">
     <p class="wordmark">Stack Cartographer QC</p>
+    <p class="guide" id="guide" aria-live="polite">
+      <span class="mem-tag">memory</span> · opponents this agent has faced. The live check is card 5 —
+      <a href="#public" id="guidePublic">Public</a>.
+    </p>
 
     <div class="stage">
       <button type="button" class="nudge" data-dir="-1" aria-label="previous card">‹</button>
       <div class="deck" id="deck">
 
         <article class="card panel field on channel" data-panel="field" style="--d:0" tabindex="0">
-          <span class="head">Field</span>
+          <span class="head tip" tabindex="0" data-tip="Saved opponent read — not live. Swipe to Public for HOLD / DRIFT.">Field</span>
           <span class="corner tl">F<span class="suit">&diams;</span></span>
           <span class="corner br">F<span class="suit">&diams;</span></span>
           <div class="sheet">
@@ -322,7 +350,7 @@
         </article>
 
         <article class="card panel ledger channel" data-panel="ledger" style="--d:1" tabindex="0">
-          <span class="head">Ledger</span>
+          <span class="head tip" tabindex="0" data-tip="How much this agent has recorded in memory. Snapshot, not live.">Ledger</span>
           <span class="corner tl">L<span class="suit">&clubs;</span></span>
           <span class="corner br">L<span class="suit">&clubs;</span></span>
           <div class="sheet">
@@ -338,7 +366,7 @@
         </article>
 
         <article class="card panel replay channel" data-panel="replay" style="--d:2" tabindex="0">
-          <span class="head">Replay</span>
+          <span class="head tip" tabindex="0" data-tip="Sample decisions from memory. Snapshot, not live.">Replay</span>
           <span class="corner tl">R<span class="suit">&spades;</span></span>
           <span class="corner br">R<span class="suit">&spades;</span></span>
           <div class="sheet">
@@ -351,7 +379,7 @@
         </article>
 
         <article class="card panel posture channel" data-panel="posture" style="--d:-2" tabindex="0">
-          <span class="head">Posture</span>
+          <span class="head tip" tabindex="0" data-tip="Playing style summary from memory. Snapshot, not live.">Posture</span>
           <span class="corner tl">P<span class="suit">&hearts;</span></span>
           <span class="corner br">P<span class="suit">&hearts;</span></span>
           <div class="sheet">
@@ -365,24 +393,24 @@
         </article>
 
         <article class="card panel public channel watching" data-panel="public" style="--d:-1" tabindex="0">
-          <span class="head">Public</span>
+          <span class="head tip" tabindex="0" data-tip="The real canary: claimed seasons vs live arena list. HOLD or DRIFT.">Public</span>
           <span class="corner tl">C<span class="suit">&diams;</span></span>
           <span class="corner br">C<span class="suit">&diams;</span></span>
           <div class="sheet">
-            <div class="verdict tip" id="verdict" data-verdict="pending" tabindex="0" data-tip="Asking the live arena whether claimed seasons still exist.">pending</div>
+            <div class="verdict tip" id="verdict" data-verdict="pending" tabindex="0" data-tip="HOLD = every claimed season is still in the live list. DRIFT = the arena moved on.">pending</div>
             <div class="watch" id="publicWatch" role="status" aria-live="polite">
               <span class="px" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
               <span class="shimmer" id="publicWatchLabel">watching the live field</span>
               <span class="elapsed" id="publicWatchTime">0.0s</span>
             </div>
-            <div class="seat tip" id="seatLine" tabindex="0" data-tip="Seated means a rank on live playground or tournament.">awaiting probe</div>
+            <div class="seat tip" id="seatLine" tabindex="0" data-tip="Whether this agent currently has a rank on a live playground or tournament season.">awaiting probe</div>
             <div class="public-grid">
               <div>
-                <div class="k tip" tabindex="0" data-tip="Seasons this process still pins.">claimed</div>
+                <div class="k tip" tabindex="0" data-tip="Competition IDs this parlor (and the runner) still believe are current.">claimed</div>
                 <ul id="claimedList"></ul>
               </div>
               <div>
-                <div class="k tip" tabindex="0" data-tip="What list-active is running now.">live</div>
+                <div class="k tip" tabindex="0" data-tip="What the arena says is active right now (list-active).">live</div>
                 <ul id="liveList" class="live-inline"></ul>
               </div>
             </div>
@@ -404,6 +432,12 @@
       <button type="button" class="tick channel" data-panel="public" aria-label="Public"><span class="sr">Public</span></button>
     </div>
   </main>
+
+  <div class="coach" id="coach" hidden>
+    <span>Cards 1–4 are memory. Card 5 · Public is the live canary (HOLD / DRIFT).</span>
+    <button type="button" id="coachGo">show Public</button>
+    <button type="button" id="coachDismiss" aria-label="dismiss">got it</button>
+  </div>
 
   <footer>
     <a class="to-land" href="/">←&nbsp;boot</a>
@@ -455,7 +489,72 @@
     document.body.style.setProperty("--ar", rgb[0]);
     document.body.style.setProperty("--ag", rgb[1]);
     document.body.style.setProperty("--ab", rgb[2]);
+    syncGuide(active);
+    try {
+      if (history.replaceState) {
+        history.replaceState(null, "", "#" + active);
+      } else {
+        location.hash = active;
+      }
+    } catch (e) {}
+    if (active === "public") hideCoach();
   }
+
+  var GUIDE = {
+    field: '<span class="mem-tag">memory</span> · opponents this agent has faced. The live check is card 5 — <a href="#public" data-jump="public">Public</a>.',
+    ledger: '<span class="mem-tag">memory</span> · how much has been recorded. Snapshot — not the live arena.',
+    replay: '<span class="mem-tag">memory</span> · sample folds and raises. Snapshot — not the live arena.',
+    posture: '<span class="mem-tag">memory</span> · how it likes to play. Snapshot — not the live arena.',
+    public: '<span class="live-tag">live</span> · claimed seasons vs the arena right now. <strong>HOLD</strong> = still true. <strong>DRIFT</strong> = seasons moved on.'
+  };
+  var guideEl = document.getElementById("guide");
+  function syncGuide(name) {
+    if (!guideEl) return;
+    guideEl.innerHTML = GUIDE[name] || GUIDE.field;
+  }
+  if (guideEl) {
+    guideEl.addEventListener("click", function (e) {
+      var a = e.target.closest("a[data-jump], a[href='#public']");
+      if (!a) return;
+      e.preventDefault();
+      select(a.getAttribute("data-jump") || "public");
+    });
+  }
+
+  function hideCoach() {
+    var coach = document.getElementById("coach");
+    if (coach) coach.hidden = true;
+    try { localStorage.setItem("sekats-coach-v1", "1"); } catch (e) {}
+  }
+  (function initCoach() {
+    var coach = document.getElementById("coach");
+    if (!coach) return;
+    var seen = false;
+    try { seen = localStorage.getItem("sekats-coach-v1") === "1"; } catch (e) {}
+    var deep = false;
+    try {
+      var h = (location.hash || "").replace(/^#/, "");
+      var q = new URLSearchParams(location.search).get("channel");
+      deep = ORDER.indexOf(h) >= 0 || ORDER.indexOf(q) >= 0;
+    } catch (e) {}
+    if (!seen && !deep) coach.hidden = false;
+    var go = document.getElementById("coachGo");
+    var dismiss = document.getElementById("coachDismiss");
+    if (go) go.addEventListener("click", function () { select("public"); hideCoach(); });
+    if (dismiss) dismiss.addEventListener("click", hideCoach);
+  })();
+
+  (function initChannel() {
+    var pick = null;
+    try {
+      var h = (location.hash || "").replace(/^#/, "");
+      var q = new URLSearchParams(location.search).get("channel");
+      if (ORDER.indexOf(q) >= 0) pick = q;
+      else if (ORDER.indexOf(h) >= 0) pick = h;
+    } catch (e) {}
+    if (pick) select(pick);
+    else syncGuide(active);
+  })();
 
   function step(dir) {
     var i = ORDER.indexOf(active);

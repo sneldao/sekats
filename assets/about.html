@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#f2eee5" />
 <title>sekats — about</title>
-<meta name="description" content="sekats is a parlor that watches the public contract of a live poker agent: claimed seasons versus the arena, HOLD or DRIFT, Kane-gated." />
+<meta name="description" content="sekats is not the poker bot — it checks claimed seasons against the live DevFun Arena. HOLD or DRIFT." />
 <link rel="canonical" href="/about" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -119,34 +119,34 @@
 
   <main class="about">
     <div class="wordmark">sekats<span class="dot">.</span></div>
-    <p class="punch"><span class="em">stakes</span>, reversed — a device that watches whether a poker agent is still the agent it claims to be.</p>
+    <p class="punch">In one line: <span class="em">this site is not the poker player</span> — it checks whether that player’s claimed seasons still match the live arena.</p>
 
     <div class="facts">
       <article>
+        <div class="k">what you are looking at</div>
+        <p>A small parlor for a public “contract”: competition IDs the process still believes, compared to what DevFun Arena lists as active. <span class="hold">HOLD</span> means they match. <span class="drift">DRIFT</span> means the seasons rotated and the process is out of date. No API key — only what anyone can already see.</p>
+      </article>
+      <article>
         <div class="k">the subject</div>
-        <p><a href="https://arena.dev.fun/agent/cmq6mrfk002yzzc1k0sonovtw">stack_cartographer</a> plays no-limit hold’em on <a href="https://arena.dev.fun/">DevFun Arena</a>. Hands, folds, and public chat belong to that runner. This parlor is not the player.</p>
+        <p><a href="https://arena.dev.fun/agent/cmq6mrfk002yzzc1k0sonovtw">stack_cartographer</a> is the agent that plays hold’em on <a href="https://arena.dev.fun/">DevFun Arena</a>. Hands and folds happen there. This parlor only watches the public face.</p>
       </article>
       <article>
         <div class="k">the sheet</div>
-        <p>Five cards. Field, ledger, replay, and posture are a memory snapshot. <em>Public</em> is live: the seasons this process still believes, checked against the arena’s list. Match is <span class="hold">HOLD</span>. Miss is <span class="drift">DRIFT</span>.</p>
+        <p>Five cards. <em>Field, ledger, replay, posture</em> are a memory snapshot (how it played). <em>Public</em> is live — the canary. Start there if you only have a minute: <a href="/sheet#public">open Public</a>.</p>
       </article>
       <article>
-        <div class="k">the check</div>
-        <p>Kane walks this parlor in a real browser. It does not sit in the twenty-second action clock. The probe uses no API key — only what the world can already see.</p>
+        <div class="k">check</div>
+        <p>Paste any public agent URL, id, or live name. See where they sit on current seasons. Optionally pin the competition IDs a runner still claims to get <span class="hold">HOLD</span> or <span class="drift">DRIFT</span> for that agent too.</p>
       </article>
       <article>
-        <div class="k">any agent</div>
-        <p>The parlor is one specific demo. The canary is the check: paste a public profile, optionally the competition IDs a runner still pins, get <span class="hold">HOLD</span> or <span class="drift">DRIFT</span>. No key. Not an optimiser.</p>
-      </article>
-      <article>
-        <div class="k">device 01</div>
-        <p>Local, parlor-grade, one machine. Run <span style="font-family:var(--mono);font-size:.85em">python3 tools/qc_server.py</span> and watch the sheet — then ask Kane if the contract still holds.</p>
+        <div class="k">kane</div>
+        <p>A browser test suite walks this parlor in Chrome. It is not the player and does not sit in the twenty-second action clock. Operators run it locally; you do not need it to understand HOLD / DRIFT.</p>
       </article>
     </div>
 
     <div class="enter">
-      <a href="/sheet">
-        <span>Watch the sheet</span>
+      <a href="/sheet#public">
+        <span>Open Public · live check</span>
         <span class="arrow">→</span>
       </a>
     </div>
