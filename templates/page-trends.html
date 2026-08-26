@@ -1,0 +1,86 @@
+{{define "page-trends"}}
+<h1>Trends</h1>
+<p class="subtitle">
+  Real shadow-LLM suggestion activity from the fixture and the
+  disagreement-action pattern matrix behind the 84.3% headline.
+  All computed by deterministic code — no model generated these numbers.
+</p>
+
+<!-- ── suggestion timeline ── -->
+<h2 class="section-title">Suggestion Timeline (newest first)</h2>
+<p class="muted">
+  {{len .Events}} events spanning {{.WindowText}} &mdash;
+  {{.ByStatus.pending}} pending,
+  {{.ByStatus.error}} errors ({{len .Events}} total)
+</p>
+<table class="timeline-table">
+  <thead>
+    <tr><th>When</th><th>Model</th><th>Status</th><th>Summary</th></tr>
+  </thead>
+  <tbody>
+    {{range .Events}}
+    <tr>
+      <td>{{.Time.Format "15:04:05"}}</td>
+      <td style="font-family:monospace;font-size:12px;color:var(--muted)">{{.Model}}</td>
+      <td><span class="status-{{.Status}}">{{if eq .Status "pending"}}⏳{{else if eq .Status "error"}}❌{{else}}✓{{end}} {{.Status}}</span></td>
+      <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{.Summary}}">{{.Summary}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+
+<!-- ── disagreement pattern matrix ── -->
+<h2 class="section-title">Disagreement Pattern Matrix</h2>
+<p class="muted">
+  {{.AgreementAgree}} / {{.AgreementTotal}} linked reviews agreed
+  ({{printf "%.1f" .AgreementRatePct}}%). Disagreements shown first.
+</p>
+<table class="matrix-table">
+  <thead>
+    <tr><th>Our action</th><th>LLM action</th><th>Count</th><th>% of all</th><th></th></tr>
+  </thead>
+  <tbody>
+    {{range .Patterns}}
+    <tr class="{{if not .Agree}}matrix-cell-disagree{{else}}matrix-cell-agree{{end}}">
+      <td>{{.OurAction}}</td>
+      <td>{{.LLMAction}}</td>
+      <td>{{.Count}}</td>
+      <td>{{printf "%.1f%%" .PctOfAll}}</td>
+      <td>
+        {{if not .Agree}}
+        <span style="color:var(--danger);font-size:11px">⚠ disagree</span>
+        {{else}}
+        <span style="color:var(--accent);font-size:11px">✓ agree</span>
+        {{end}}
+      </td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+
+<!-- ── snapshot figures ── -->
+<h2 class="section-title">Snapshot Figures</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Linked Reviews</h3>
+    <p class="big-number">{{.LinkedReviews}}</p>
+    <p class="muted">reviews with a 1:1 decision_id link</p>
+  </div>
+  <div class="card">
+    <h3>Agreement Rate</h3>
+    <p class="big-number">{{printf "%.1f%%" .AgreementRatePct}}</p>
+    <p class="muted">{{.AgreementAgree}} / {{.AgreementTotal}}</p>
+  </div>
+  <div class="card">
+    <h3>Top Disagreement</h3>
+    <p class="big-number">{{.TopDisagreeCount}}</p>
+    <p class="muted">single pattern count (bet vs check)</p>
+  </div>
+</div>
+
+<p class="muted" style="margin-top:16px">
+  Note: the fixture does not carry per-review timestamps, so an agreement-rate
+  over-time chart would be fabricated. The timeline above shows policy-suggestion
+  creation events (real epoch-ms), not per-review agreement drift.
+</p>
+{{end}}

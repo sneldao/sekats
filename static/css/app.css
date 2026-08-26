@@ -29,6 +29,7 @@ body {
 .topnav .brand { font-weight: 700; margin-right: 16px; }
 .topnav a { color: var(--muted); text-decoration: none; }
 .topnav a:hover { color: var(--text); }
+.topnav a.active { color: var(--accent); font-weight: 600; }
 
 .content { padding: 32px; max-width: 1000px; margin: 0 auto; }
 
@@ -105,6 +106,31 @@ h1 { margin-bottom: 4px; }
 }
 
 .review-item-actions { display: flex; gap: 8px; margin-top: 10px; }
+.btn-reject { border-color: var(--danger); color: var(--danger); }
+.btn-reject:hover { background: var(--danger); color: var(--bg); }
+.btn-export { border-color: var(--accent); color: var(--accent); }
+.btn-export:hover { background: var(--accent); color: var(--bg); }
+
+/* Trends screen */
+.timeline-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.timeline-table th, .timeline-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.timeline-table th { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
+.status-pending { color: var(--warn); }
+.status-error { color: var(--danger); }
+.status-promoted { color: var(--accent); }
+.matrix-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.matrix-table th, .matrix-table td { text-align: center; padding: 6px 10px; border: 1px solid var(--border); }
+.matrix-table th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+.matrix-cell-disagree { background: rgba(248, 113, 113, 0.15); }
+.matrix-cell-agree { background: rgba(110, 231, 183, 0.08); }
+.preflop-bar { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 13px; }
+.preflop-bar .label { width: 80px; text-align: right; color: var(--muted); font-family: monospace; }
+.preflop-bar .bar-wrap { flex: 1; height: 14px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.preflop-bar .bar { height: 100%; background: var(--accent); border-radius: 3px; }
+.preflop-bar .count { width: 40px; color: var(--muted); font-size: 12px; }
+.export-preview { background: #0b0d11; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: monospace; font-size: 12px; color: var(--accent); white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+.section-title { margin: 32px 0 12px; font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.section-title:first-child { margin-top: 0; }
 .btn {
   border: 1px solid var(--border);
   background: transparent;

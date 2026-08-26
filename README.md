@@ -25,8 +25,16 @@ framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
 2. **Policy-as-ACs** (`/policy`) — the policy file's hand-tier rules, run
    as assertions against real logged decisions. Currently catches 1 real
    violation in the sample.
-3. **Review Queue** (`/review`) — 26 real hands where the agent and the
+3. **Review Queue** (`/review`) — 25 real hands where the agent and the
    shadow-LLM disagreed, with accept/reject buttons (htmx partial swap).
+   Verdicts persist to disk and survive a restart.
+4. **Trends** (`/trends`) — the shadow-LLM suggestion timeline (real
+   timestamps from the fixture) and the disagreement pattern matrix
+   (bet→check dominates). No fabricated agreement-over-time chart: the
+   fixture carries no per-review timestamps, and the screen says so.
+5. **Verdict Report** (`/verdicts`) — every human verdict joined against the
+   fixture row it adjudicated, as a shareable markdown report; JSON export
+   at `/export`.
 
 ## Data
 
@@ -49,5 +57,6 @@ needed.
 ## Kane CLI verification
 
 See `docs/PLAN.md` for the closed-loop plan: Kane flows verify each of the
-3 screens render their key numbers/callouts, and the review-queue
-accept/reject action actually updates state.
+screens render their key numbers/callouts, that the review-queue
+accept/reject action actually updates state and persists, and that the
+verdict report/export reflect recorded verdicts.
