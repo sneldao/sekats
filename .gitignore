@@ -5,3 +5,13 @@
 # Kane CLI run artifacts (evidence packs) — do not commit per kane-cli docs.
 # output-*_test.md directories ARE commit-safe and intentionally tracked.
 .testmuai/
+
+sekats-agnes-diagnostics.zip
+
+# Live DB snapshot (142MB, from the poker host) and local pipeline state —
+# never commit: the DB is private-host data and the state files are user runs.
+data/live/
+data/verdicts.json
+data/pattern_rejections.json
+data/policy_drafts.json
+data/policy-patches/

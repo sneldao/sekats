@@ -10,8 +10,12 @@ import (
 )
 
 // Decision is one row from our_decisions, as produced by
-// poker/tools/export_scenarios.py.
+// poker/tools/export_scenarios.py. The frozen export predates the id and
+// decided_at columns here (they read zero in fixture mode); the live bridge
+// (internal/live) populates them.
 type Decision struct {
+	ID        int64    `json:"id"`
+	DecidedAt int64    `json:"decided_at"`
 	Mode      string   `json:"mode"`
 	Street    string   `json:"street"`
 	HandCode  string   `json:"hand_code"`

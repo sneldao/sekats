@@ -7,4 +7,10 @@
 <div id="review-counts" hx-swap-oob="true" class="grid" data-testid="review-counts">
   {{template "review-counts-inner" .Counts}}
 </div>
+{{if .Draft}}
+<div id="draft-toast" hx-swap-oob="true" class="callout callout-draft" data-testid="draft-toast">
+  <strong>Policy edit drafted.</strong> Pattern <code>{{.Draft.PatternKey}}</code> crossed the rejection threshold —
+  <a href="/promotions">review the staged edit on the Promotion Pipeline</a>.
+</div>
+{{end}}
 {{end}}

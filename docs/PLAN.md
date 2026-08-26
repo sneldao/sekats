@@ -94,3 +94,89 @@ Diagnostics proof of Agnes model usage (organizer-approved in lieu of an
 AgnesCode-app export): `docs/agnes-diagnostics/` — two raw session transcripts
 (pi CLI on `agnes-2.5-flash`, Factory droid on `Agnes-Code-2.5-Pro-0`, both
 2026-08-26 against this repo) plus a summary and verification commands.
+
+## Progress log — live bridge + closed promotion loop (2026-08-26)
+
+Three features added on top of the build-week state:
+
+### 1. Read-only live bridge (`internal/live`, `tools/sync_live.sh`)
+
+The frozen fixtures in `data/` were a 2026-08-20 export; the console could
+never show fresh rot. Now:
+
+- `tools/sync_live.sh` snapshots the live DB (`nuncio-vultr`,
+  `/home/linuxuser/arena-poker/arena-poker.sqlite3`, WAL mode, ~142 MB)
+  with SQLite's online-backup API over SSH — a WAL-consistent copy, not a
+  racing rsync of `.sqlite3`/`-wal`/`-shm` — into `data/live/`, with an
+  atomic rename so a half-written file is never the visible snapshot.
+- The server auto-detects `data/live/arena-poker.sqlite3` (or
+  `SEKATS_DB=/path`, `SEKATS_DB=off` to force fixtures), opens it
+  read-only (URI `mode=ro` + `PRAGMA query_only`), and recomputes every
+  quality number with the exact semantics the fixture export used (linked
+  = `decision_id IS NOT NULL`; agreement over linked error-free reviews;
+  error buckets over all reviews; disagreement sample = latest 25 linked
+  error-free mismatches). Verified against the live snapshot: the bridge
+  reproduces the fixture's 6243/6, 84.3%, 2712, and the same 25-hand
+  sample.
+- Freshness is per-request: the snapshot's mtime is re-checked on each
+  page load, so a new sync is reflected without a restart; load failures
+  (e.g. a mid-copy file) keep the previous data.
+- Honesty in the UI: the Quality Surface carries a source badge
+  (LIVE with sync time + latest decision id/time, or FROZEN with the
+  export date and a pointer at the sync tool), and the broken-loop
+  callout states whether its numbers are current or stale.
+- Security boundary: no credentials or host access in this repo (public
+  canary); the sync script uses the operator's own SSH alias, and the
+  142 MB snapshot + all local state files are git-ignored.
+
+### 2. Closed promotion loop (`internal/promotion`, `/promotions`)
+
+The 0.1% promotion rate became a working human-in-the-loop pipeline:
+
+- Rejecting a hand in the review queue buckets it by pattern (adapter's
+  `PatternKey`: street + action pair, e.g. `flop: bet to check`) with the
+  decision id, hand, pot, and the shadow-LLM's extracted rationale as
+  evidence; state persists in `data/pattern_rejections.json` and dedupes
+  by decision id (one hand counts once).
+- A pattern crossing the threshold (`SEKATS_PROMOTE_THRESHOLD`, default 3)
+  auto-drafts a policy edit: a `{pattern, rule}` entry for
+  `postflop.promotedFromHandReviews` — the same section the agent's
+  existing six promotions live in, so an approved edit merges into the
+  live policy with no new machinery. The toast appears in the review
+  queue and the draft is staged on `/promotions` with its evidence table.
+  A discarded pattern re-enters review if it keeps recurring; approved is
+  terminal. State persists in `data/policy_drafts.json`.
+- Approval produces a machine-applicable `sekats-policy-patch/v1` JSON
+  (target, entry, source decisions, provenance) downloadable from
+  `/promotions/{id}/patch`; `tools/apply_policy_draft.py` is the only
+  writer — it runs on whatever machine holds the live policy file, is
+  idempotent, and refuses unknown schemas. The console never writes to
+  agent files (public/private host split from the poker repo's AGENTS.md).
+- Verified end-to-end in a real browser (Kane flow `promotions_test.md`):
+  reject three flop bet→check hands → auto-draft with 3 evidence rows →
+  approve → patch JSON with correct schema/target/entry.
+
+### 3. Pluggable schema (`internal/engine`, `internal/adapters`)
+
+Poker-specific rules moved out of Go code into data:
+
+- `internal/engine` is domain-neutral: generic `Decision`/`Review`,
+  declarative `Rule` (phase + actions + policy list ref + detail
+  template) loaded from per-agent rules JSON, `RunRules`, `Draft`/`Patch`,
+  rationale extraction.
+- `internal/adapters` is the seam: the poker adapter resolves the
+  preflop hand-list sections of `poker-policy.json`, owns `PatternKey`
+  and the draft text/target, and registers under `SEKATS_ADAPTER`
+  (default `poker`). The three AC rules now live in
+  `data/poker-rules.json` — the old hard-coded functions are gone.
+- The promotion pipeline, UI, and persistence are adapter-agnostic; a new
+  agent with a policy file and decision log adds one adapter plus its
+  policy and rules files. The remaining poker-specific surface is the
+  decision-log SQL in `internal/live` (documented as the next seam).
+
+State at end of pass: `go test ./...` green (engine, adapters, live
+bridge against a real temp SQLite DB, promotion, policy, verdicts),
+`go vet` clean, server verified in both fixture and live modes, three
+Kane flows added/updated (`live_bridge_test.md`, `promotions_test.md`,
+and `review_queue_test.md` now targets a pending item specifically so the
+suite stays re-runnable against persisted state).

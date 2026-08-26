@@ -25,6 +25,16 @@ type Surface struct {
 	AgreementRatePct float64
 }
 
+// SourceInfo tells the screen where its numbers came from and how fresh
+// they are: "live" (a read-only bridge over a synced snapshot of the
+// agent's SQLite log) or "fixture" (the frozen export in data/).
+type SourceInfo struct {
+	Kind             string // "live" or "fixture"
+	Freshness        string // human line, e.g. "synced 2026-08-26 18:39 UTC"
+	LatestDecisionID int64
+	LatestDecisionAt string // "" when the source carries no timestamps
+}
+
 // Build derives a Surface from the raw QualityStats fixture.
 func Build(s store.QualityStats) Surface {
 	surf := Surface{

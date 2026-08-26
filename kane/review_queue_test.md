@@ -12,8 +12,8 @@ Open the review queue page.
 Read the current Pending count and store it as pending_before.
 Read the current Accepted count and store it as accepted_before.
 
-## Accept the first review item
-Find the first review item in the list, note its hand code as accepted_hand, and click its "Accept agent" button.
+## Accept the first pending review item
+Find the first review item that shows a "pending" verdict badge, note its hand code as accepted_hand, and click its "Accept agent" button.
 
 ## Verify the verdict and counters updated without a full page reload
 Confirm the review item whose hand code is accepted_hand now shows a verdict badge reading "accepted".

@@ -19,12 +19,12 @@ import (
 
 // SuggestionEvent is one policy-suggestion row with its timestamp decoded.
 type SuggestionEvent struct {
-	Time        time.Time
-	Status      string
-	Model       string
-	Summary     string
-	Error       string
-	SecondsAgo  int64
+	Time       time.Time
+	Status     string
+	Model      string
+	Summary    string
+	Error      string
+	SecondsAgo int64
 }
 
 // Pattern is one agent-action vs shadow-LLM-action pair with its count.
@@ -44,13 +44,13 @@ type View struct {
 	WindowText string
 	ByStatus   map[string]int
 
-	Patterns []Pattern
+	Patterns         []Pattern
 	TopDisagreeCount int
 
-	AgreementAgree   int
-	AgreementTotal   int
-	AgreementRatePct float64
-	LinkedReviews    int
+	AgreementAgree        int
+	AgreementTotal        int
+	AgreementRatePct      float64
+	LinkedReviews         int
 	ReviewsWithTimestamps int
 }
 
@@ -72,11 +72,11 @@ func Build(sugg []store.PolicySuggestion, q store.QualityStats) View {
 			summary = "(no summary — suggestion errored)"
 		}
 		v.Events = append(v.Events, SuggestionEvent{
-			Time:        time.UnixMilli(s.CreatedAt).UTC(),
-			Status:      status,
-			Model:       s.Model,
-			Summary:     summary,
-			Error:       errText,
+			Time:    time.UnixMilli(s.CreatedAt).UTC(),
+			Status:  status,
+			Model:   s.Model,
+			Summary: summary,
+			Error:   errText,
 		})
 		v.ByStatus[status]++
 	}

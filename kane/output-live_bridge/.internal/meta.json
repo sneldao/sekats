@@ -1,0 +1,18 @@
+{
+  "test_id": "56f76d1a-7ab1-43a8-9b4d-80399780a102",
+  "project_id": "01M0GB5N3X6P2CQB2T1H8X1QD6",
+  "folder_id": "01M0GB69APX1SXDVRHW06YV7AC",
+  "org_id": "3283191",
+  "session_name": "live_bridge",
+  "commit_id": "c7de72d4-0093-4239-b0a9-25471815646e",
+  "testcase_id": "01M0ZWQ2MPDSG30V5ECNZF65Z6",
+  "executions": [
+    {
+      "execution_id": "4df0e90f-27a1-43d1-9ff5-5d40360ad05d",
+      "run_kind": "author",
+      "status": "passed",
+      "valid": true,
+      "at": "2026-08-26T20:40:08.687Z"
+    }
+  ]
+}

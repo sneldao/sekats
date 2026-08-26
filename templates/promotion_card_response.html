@@ -1,0 +1,8 @@
+{{/* Response to an approve/discard POST: the updated card (swapped in
+     place) plus an out-of-band swap of the summary counters. */}}
+{{define "promotion-card-response"}}
+{{template "promotion-card" .Card}}
+<div id="promotion-counts" hx-swap-oob="true" class="grid" data-testid="promotion-counts">
+  {{template "promotion-counts-inner" .Counts}}
+</div>
+{{end}}

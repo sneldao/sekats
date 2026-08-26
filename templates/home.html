@@ -1,6 +1,16 @@
 {{define "page-home"}}
 <h1>Quality Surface</h1>
-<p class="subtitle">Live signal from the DevFun Arena poker agent's own decision log — not a mock.</p>
+<p class="subtitle">Live signal from the agent's own decision log — not a mock.</p>
+
+<div class="source-badge" data-testid="source-badge">
+  {{if eq .Source.Kind "live"}}
+  <span class="src-pill src-live" data-testid="source-live">LIVE</span>
+  read-only bridge to the agent's decision log — {{.Source.Freshness}} · latest decision <code>#{{.Source.LatestDecisionID}}</code>{{if .Source.LatestDecisionAt}} ({{.Source.LatestDecisionAt}}){{end}}
+  {{else}}
+  <span class="src-pill src-frozen" data-testid="source-frozen">FROZEN</span>
+  {{.Source.Freshness}} · latest decision <code>#{{.Source.LatestDecisionID}}</code> · run <code>tools/sync_live.sh</code> to go live
+  {{end}}
+</div>
 
 <section class="callout callout-broken" data-testid="broken-loop-callout">
   <h2>The advisory loop is broken</h2>
@@ -9,6 +19,14 @@
     only <strong>{{.Surface.PolicySuggestionsPromoted}}</strong> promoted into real policy
     (<strong>{{printf "%.1f" .Surface.PromotionRatePct}}%</strong>).
     Good ideas are being generated and never reaching production.
+  </p>
+  <p class="muted">
+    {{if eq .Source.Kind "live"}}
+    Numbers current as of {{.Source.Freshness}} — the callout fires on fresh rot, not a stale export.
+    {{else}}
+    Stale by construction: these are {{.Source.Freshness}}, not the live log.
+    {{end}}
+    The <a href="/promotions">Promotion Pipeline</a> adds the missing human side of the loop.
   </p>
 </section>
 
@@ -34,6 +52,13 @@
     <h3>Linked Reviews</h3>
     <p class="big-number">{{.Surface.LinkedReviews}}</p>
     <p class="muted">reviews with a 1:1 decision_id link (post-fix; historical rows predate this)</p>
+  </div>
+
+  <div class="card" data-testid="promotion-pipeline-card">
+    <h3>Promotion Pipeline</h3>
+    <p class="big-number">{{.Promotions.Staged}}</p>
+    <p class="muted">policy edits staged for review · {{.Promotions.Approved}} approved for application</p>
+    <p class="muted"><a href="/promotions">Review staged edits &rarr;</a></p>
   </div>
 </section>
 {{end}}

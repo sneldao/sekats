@@ -1,0 +1,18 @@
+{
+  "commit_id": "d5e734bd-b7c5-4c65-81e5-8dbb795b6975",
+  "test_id": "45d3077b-7216-48f8-a973-52404f8c5b96",
+  "testcase_id": "01M0ZSYT6VR99WFPZAZY423TSP",
+  "project_id": "01M0GB5N3X6P2CQB2T1H8X1QD6",
+  "folder_id": "01M0GB69APX1SXDVRHW06YV7AC",
+  "org_id": "3283191",
+  "session_name": "promotions",
+  "executions": [
+    {
+      "execution_id": "a64d2a23-277a-4fc9-80d8-02f080b69206",
+      "run_kind": "author",
+      "status": "passed",
+      "valid": true,
+      "at": "2026-08-26T20:45:09.572Z"
+    }
+  ]
+}

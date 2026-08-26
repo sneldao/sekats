@@ -1,0 +1,18 @@
+{
+  "test_id": "925dcb29-5d6b-40d4-9392-bc36c01223a2",
+  "project_id": "01M0GB5N3X6P2CQB2T1H8X1QD6",
+  "folder_id": "01M0GB69APX1SXDVRHW06YV7AC",
+  "org_id": "3283191",
+  "session_name": "trends",
+  "commit_id": "fab3fef9-4bd0-40c8-8b12-a6c8816c83df",
+  "testcase_id": "01M0ZXQVWHHWBX6EDMMW736M52",
+  "executions": [
+    {
+      "execution_id": "05a6926c-a1e9-4746-8104-28ba2ca8a175",
+      "run_kind": "author",
+      "status": "passed",
+      "valid": true,
+      "at": "2026-08-26T20:57:49.336Z"
+    }
+  ]
+}

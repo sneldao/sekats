@@ -1,0 +1,41 @@
+{{define "page-promotions"}}
+<h1>Promotion Pipeline</h1>
+<p class="subtitle">The advisory loop, closed: a human rejects the agent on a repeated pattern, the console auto-drafts a policy edit, a human approves it, and the patch lands in the agent's policy file. Nothing is ever applied automatically.</p>
+
+<section class="grid" id="promotion-counts" data-testid="promotion-counts">
+  {{template "promotion-counts-inner" .}}
+</section>
+
+<h2 class="section-title">Policy edit drafts</h2>
+{{if .Cards}}
+<div id="promotion-list" data-testid="promotion-list">
+  {{range .Cards}}{{template "promotion-card" .}}{{end}}
+</div>
+{{else}}
+<p class="empty-state" data-testid="no-drafts">No drafts yet. Reject {{.Threshold}} hands on the same pattern in the <a href="/review">Review Queue</a> and a policy edit is auto-drafted here.</p>
+{{end}}
+
+<h2 class="section-title">Patterns accumulating rejections</h2>
+{{if .Patterns}}
+<table class="pattern-table" data-testid="pattern-table">
+  <thead><tr><th>Pattern</th><th>Rejections</th><th>Status</th></tr></thead>
+  <tbody>
+    {{range .Patterns}}
+    <tr>
+      <td><code>{{.Key}}</code></td>
+      <td>{{.Count}}{{if ge .Count $.Threshold}} <span class="muted">— at threshold</span>{{end}}</td>
+      <td>{{if .DraftID}}<a href="#draft-card-{{.DraftID}}">draft {{.DraftID}}</a>{{else}}<span class="muted">accumulating</span>{{end}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{else}}
+<p class="muted">No rejections recorded yet.</p>
+{{end}}
+
+<p class="muted">
+  Approved edits append to <code>{{.Target}}</code> in the {{.Agent}}'s policy file.
+  An approved draft downloads as a <code>.policy-patch.json</code> artifact; apply it on the
+  agent host with <code>python3 tools/apply_policy_draft.py</code> — sekats never writes to the agent's files.
+</p>
+{{end}}

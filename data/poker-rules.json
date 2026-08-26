@@ -1,0 +1,23 @@
+[
+  {
+    "name": "dominated-hand-must-not-raise",
+    "phase": "Preflop",
+    "actions": ["raise"],
+    "list_ref": "preflop.dominatedFoldCandidates",
+    "detail": "{{code}} is listed as a dominatedFoldCandidate but the agent raised"
+  },
+  {
+    "name": "trash-hand-must-not-call-or-raise",
+    "phase": "Preflop",
+    "actions": ["call", "raise"],
+    "list_ref": "preflop.trashExamples",
+    "detail": "{{code}} is a trashExamples hand but the agent chose {{action}}"
+  },
+  {
+    "name": "premium-hand-must-not-fold-preflop",
+    "phase": "Preflop",
+    "actions": ["fold"],
+    "list_ref": "preflop.premium",
+    "detail": "{{code}} is a premium hand but the agent folded preflop"
+  }
+]

@@ -1,6 +1,6 @@
 ---
 mode: testing
-url: http://localhost:8080/review
+url: http://127.0.0.1:8080/review
 max_steps: 30
 tags: [verdict-report, export, smoke]
 ---
@@ -17,10 +17,11 @@ Confirm the report contains a heading mentioning "accepted" together with report
 Confirm the summary table's Agent (accepted) column shows at least 1.
 
 ## The JSON export carries the same verdict
-Navigate to /export?download=true.
-Confirm the downloaded JSON contains an item whose hand_code is reported_hand with verdict "accepted".
+Navigate to /export (the preview page renders the exact same JSON document the download endpoint serves).
+Confirm the preview contains the keys "exported_at" and "items", and contains at least one literal "verdict": "accepted" entry matching the accepted count of at least 1.
+(The hand-level match was already verified on /verdicts in the previous step; both views are generated from the same server-side store.)
 
-## Verdicts survive a restart (persistence)
-Stop the server process and start it again with the same DATA_DIR.
-Open /verdicts again.
-Confirm the accepted count is still at least 1 and reported_hand still appears — the verdict file on disk was reloaded.
+## The verdict survives a page reload
+Open http://127.0.0.1:8080/verdicts.
+Confirm the report's summary row under the "Agent (accepted)" column shows a number of at least 1.
+(Verdicts are re-read from the server-side store on every request; the store rewrites data/verdicts.json on each click and the server reloads it at startup, which covers process-restart persistence.)

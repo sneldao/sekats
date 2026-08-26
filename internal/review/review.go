@@ -2,9 +2,9 @@
 // agent's decision and the shadow-LLM review disagreed, with a human
 // accept/reject verdict recorded against each one.
 //
-// State is in-memory for the hackathon demo — see docs/PLAN.md. A restart
-// resets verdicts, which is fine for a judged demo but called out here so a
-// future contributor doesn't assume durability.
+// The queue itself is in-memory (one per data snapshot); verdict
+// durability lives in internal/verdicts, which the server re-applies to a
+// freshly seeded queue after every restart or live-data refresh.
 package review
 
 import (
