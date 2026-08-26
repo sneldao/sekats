@@ -15,12 +15,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/udingethe/sekats/internal/policy"
-	"github.com/udingethe/sekats/internal/quality"
-	"github.com/udingethe/sekats/internal/review"
-	"github.com/udingethe/sekats/internal/store"
-	"github.com/udingethe/sekats/internal/trends"
-	"github.com/udingethe/sekats/internal/verdicts"
+	"github.com/sneldao/sekats/internal/policy"
+	"github.com/sneldao/sekats/internal/quality"
+	"github.com/sneldao/sekats/internal/review"
+	"github.com/sneldao/sekats/internal/store"
+	"github.com/sneldao/sekats/internal/trends"
+	"github.com/sneldao/sekats/internal/verdicts"
 )
 
 type app struct {

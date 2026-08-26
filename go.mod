@@ -1,3 +1,3 @@
-module github.com/udingethe/sekats
+module github.com/sneldao/sekats
 
 go 1.26.2

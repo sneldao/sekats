@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/udingethe/sekats/internal/store"
+	"github.com/sneldao/sekats/internal/store"
 )
 
 // JoinError flags one verdict whose decision_id had no matching

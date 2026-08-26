@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/udingethe/sekats/internal/store"
+	"github.com/sneldao/sekats/internal/store"
 )
 
 func TestRecordPersistsAcrossReload(t *testing.T) {

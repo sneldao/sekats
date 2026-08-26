@@ -14,7 +14,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/udingethe/sekats/internal/store"
+	"github.com/sneldao/sekats/internal/store"
 )
 
 // SuggestionEvent is one policy-suggestion row with its timestamp decoded.

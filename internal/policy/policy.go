@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/udingethe/sekats/internal/store"
+	"github.com/sneldao/sekats/internal/store"
 )
 
 // Violation is one decision that broke one policy rule.

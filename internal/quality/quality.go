@@ -3,7 +3,7 @@
 package quality
 
 import (
-	"github.com/udingethe/sekats/internal/store"
+	"github.com/sneldao/sekats/internal/store"
 )
 
 // Surface is everything the "/" screen needs, pre-computed so the template

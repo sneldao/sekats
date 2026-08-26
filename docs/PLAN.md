@@ -89,3 +89,8 @@ hackathon scope above was complete as of Aug 21; this is the second build pass):
 
 State at end of build week: all 5 screens live, `go test ./...` green,
 `go vet ./...` clean, 4 Kane flows authored.
+
+Diagnostics proof of Agnes model usage (organizer-approved in lieu of an
+AgnesCode-app export): `docs/agnes-diagnostics/` — two raw session transcripts
+(pi CLI on `agnes-2.5-flash`, Factory droid on `Agnes-Code-2.5-Pro-0`, both
+2026-08-26 against this repo) plus a summary and verification commands.
