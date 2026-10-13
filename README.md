@@ -52,6 +52,11 @@ framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
 6. **Verdict Report** (`/verdicts`) — every human verdict joined against the
    fixture row it adjudicated, as a shareable markdown report; JSON export
    at `/export`.
+7. **Anchors Registry** (`/anchors`, JSON at `/api/anchors`) — every successful
+   record from the persisted attestation store, including drafts no longer in
+   the queue, with contract, draft key, document hash, attester, transaction
+   link and a copyable read-only `cast call`. The browser independently hashes
+   the canonical document and reads the contract getter.
 
 ## Data: frozen fixtures and the live bridge
 
@@ -105,6 +110,19 @@ needed. Other env vars:
 - `SEKATS_ATTEST` — `off` disables on-chain anchoring (default: auto,
   enabled when `SEKATS_ATTEST_KEY` + `SEKATS_ATTEST_CONTRACT` are set).
 - `SEKATS_RPC` / `SEKATS_EXPLORER` / `CAST_BIN` — anchoring config.
+- `SEKATS_AGENT_ADDRESS` — public agent wallet address for the Quality Surface
+  treasury line. Reads `eth_getBalance` and `eth_getTransactionCount` through
+  `SEKATS_RPC` (default `https://rpc.monad.xyz`), with a 3-second total timeout
+  and a 15-second server-side cache for successes and failures. No wallet key
+  is needed. Missing/invalid config shows `not configured`; failed reads show
+  `RPC unavailable`, never a fabricated zero. Transaction count is the wallet's
+  outgoing nonce, not its incoming transfers.
+- `SEKATS_PUBLIC_RPC` — public browser verification RPC, default
+  `https://rpc.monad.xyz`. This URL is exposed in HTML, JSON and cast commands;
+  use only a public, unauthenticated endpoint that allows browser CORS.
+  It is separate from `SEKATS_RPC` to avoid exposing server RPC credentials.
+  Registry reads also work with `SEKATS_ATTEST=off`; `SEKATS_ATTEST_CONTRACT`
+  supplies a fallback contract for old records without an address.
 - `SEKATS_DB_HOST` / `SEKATS_DB_REMOTE` — used by `tools/sync_live.sh`.
 
 Local state (`data/verdicts.json`, `data/pattern_rejections.json`,
@@ -166,6 +184,27 @@ Env: `SEKATS_RPC` (default `https://rpc.monad.xyz`), `SEKATS_EXPLORER`
 `failed` with the error and can be retried with the card's "Retry anchor"
 button (`POST /promotions/{id}/attest`). Fund the attester key with a
 little MON — one anchor costs a fraction of a cent of gas.
+
+## Reuse the read-only verifier
+
+Serve `static/js/anchor-verifier.js` unchanged from an HTTPS site or localhost.
+Import its single function from a vanilla module script, with no build step:
+
+```js
+import { verifyAnchor } from "/static/js/anchor-verifier.js";
+const result = await verifyAnchor({ draftID, docURL, contract, rpc });
+```
+
+`docURL` must serve the exact canonical attestation bytes. The module computes
+SHA-256 over those bytes and over `"sekats/draft/" + draftID`, then calls only
+`anchored(bytes32) returns (bytes32)` via `eth_call`. It ignores the server's
+stored hash and key. Results are `match`, `mismatch`, `not-found` (zero hash or
+no contract), or `unavailable` (document, RPC, CORS, timeout or crypto failure).
+Confirm the contract address and RPC independently; this verifies document
+integrity, not the registry's claimed attester or transaction. No additional
+ABI, account access, signature or transaction is required.
+
+Verifier tests run with `node --test static/js/anchor-verifier.test.mjs`.
 
 ## Kane CLI verification
 

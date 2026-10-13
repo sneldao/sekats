@@ -35,6 +35,7 @@ import (
 	"github.com/sneldao/sekats/internal/attest"
 	"github.com/sneldao/sekats/internal/engine"
 	"github.com/sneldao/sekats/internal/live"
+	"github.com/sneldao/sekats/internal/monad"
 	"github.com/sneldao/sekats/internal/policy"
 	"github.com/sneldao/sekats/internal/promotion"
 	"github.com/sneldao/sekats/internal/quality"
@@ -55,6 +56,9 @@ type app struct {
 	anchorer         attest.Anchorer // nil = on-chain anchoring disabled
 	attests          *attest.Store
 	attestExplorer   string // base URL for tx links, even when signing is off
+	attestContract   string // read-only config, independent of signing
+	publicRPC        string
+	treasury         *monad.TreasuryReader
 }
 
 // dataSource is the current view over the agent's data. In live mode the
@@ -118,6 +122,9 @@ func main() {
 		promoteThreshold: threshold,
 		attests:          attest.NewStore(filepath.Join(dataDir, "attestations.json")),
 		attestExplorer:   envOr("SEKATS_EXPLORER", "https://monadscan.com"),
+		attestContract:   os.Getenv("SEKATS_ATTEST_CONTRACT"),
+		publicRPC:        envOr("SEKATS_PUBLIC_RPC", "https://rpc.monad.xyz"),
+		treasury:         monad.NewTreasuryReader(envOr("SEKATS_RPC", "https://rpc.monad.xyz"), os.Getenv("SEKATS_AGENT_ADDRESS")),
 	}
 	if err := a.promos.Load(); err != nil {
 		log.Printf("loading promotion state: %v", err)
@@ -144,6 +151,8 @@ func main() {
 	mux.HandleFunc("/verdicts", a.handleVerdicts)
 	mux.HandleFunc("/promotions", a.handlePromotions)
 	mux.HandleFunc("/promotions/", a.handlePromotionAction)
+	mux.HandleFunc("/anchors", a.handleAnchors)
+	mux.HandleFunc("/api/anchors", a.handleAnchorsJSON)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	log.Printf("sekats listening on %s (data=%s, adapter=%s, source=%s)", addr, dataDir, ad.Name(), ds.src.Kind)
@@ -294,6 +303,7 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 	a.renderPage(w, "page-home", "Quality Surface", struct {
 		Surface    quality.Surface
 		Source     quality.SourceInfo
+		Treasury   monad.Treasury
 		Promotions struct {
 			Staged   int
 			Approved int
@@ -301,8 +311,9 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 			AnchorOn bool
 		}
 	}{
-		Surface: surf,
-		Source:  src,
+		Surface:  surf,
+		Source:   src,
+		Treasury: a.treasury.Snapshot(r.Context()),
 		Promotions: struct {
 			Staged   int
 			Approved int

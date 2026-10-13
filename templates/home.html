@@ -12,6 +12,17 @@
   {{end}}
 </div>
 
+<section class="source-badge" data-testid="treasury-line">
+  {{if eq .Treasury.Status "ready"}}
+  <span class="src-pill src-live">READ-ONLY</span>
+  the agent you're supervising holds <strong>{{.Treasury.Balance}} MON, {{.Treasury.TxCount}} txs</strong>
+  <p class="muted"><code>{{.Treasury.Address}}</code> · checked {{.Treasury.CheckedAt.Format "2006-01-02 15:04:05 UTC"}} · cached up to 15 seconds · txs is the outgoing transaction count (nonce)</p>
+  {{else}}
+  Agent treasury: <strong>{{.Treasury.Status}}</strong>.
+  {{if eq .Treasury.Status "not configured"}}Set <code>SEKATS_AGENT_ADDRESS</code> to the agent's public wallet address and <code>SEKATS_RPC</code> to a Monad RPC URL.{{else}}Could not read the agent's balance and transaction count. Try again after 15 seconds.{{end}}
+  {{end}}
+</section>
+
 <section class="callout callout-broken" data-testid="broken-loop-callout">
   <h2>The advisory loop is broken</h2>
   <p>
@@ -58,7 +69,7 @@
     <h3>Promotion Pipeline</h3>
     <p class="big-number">{{.Promotions.Staged}}</p>
     <p class="muted">policy edits staged for review · {{.Promotions.Approved}} approved for application{{if .Promotions.Anchored}} · <strong data-testid="anchored-count">{{.Promotions.Anchored}} anchored on Monad</strong>{{end}}</p>
-    <p class="muted"><a href="/promotions">Review staged edits &rarr;</a></p>
+    <p class="muted"><a href="/promotions">Review staged edits &rarr;</a> · <a href="/anchors">Verify Monad anchors &rarr;</a></p>
   </div>
 </section>
 {{end}}
