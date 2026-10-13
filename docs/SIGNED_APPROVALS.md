@@ -4,6 +4,13 @@ This is a **new deployment**, not an upgrade of the permissionless contract.
 The old committed creation bytecode was removed to prevent deploying it by
 mistake. No deployment is performed by the build helper.
 
+> Deployed 2026-10-13 to Monad mainnet at
+> [`0x771a99F24E7Cd81d0937edcb797138AAC228FDfE`](https://monadscan.com/address/0x771a99F24E7Cd81d0937edcb797138AAC228FDfE)
+> (deploy tx `0xf5113a6b…80cd`), compiled with `solc 0.8.26 --optimize` and
+> sent via `cast send --create` with the constructor arg ABI-appended
+> (owner = the dedicated attester wallet). The old contract
+> (`0x06bce5d5…c3bf`) remains valid under `SEKATS_ATTEST_LEGACY=true`.
+
 ## Offline/local validation
 
 From the repository root (Go 1.26.2, Foundry, Solidity 0.8.26):

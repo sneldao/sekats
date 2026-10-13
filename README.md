@@ -21,12 +21,17 @@ on approval.
 Built in Go with server-rendered HTML + htmx — no JS build step, no
 framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
 
+**Live demo:** <https://console.sekats.thisyearnofear.com> — fixture mode,
+no credentials on the host. Bring a wallet to leave a juror verdict on
+`/review` or to verify an anchor client-side on `/anchors`.
+
 ## Screens
 
 1. **Quality Surface** (`/`) — the broken-loop callout, shadow-LLM
-   agreement rate, review-provider error buckets, and a data-source badge
+   agreement rate, review-provider error buckets, a data-source badge
    stating whether the numbers are LIVE (read-only bridge) or FROZEN
-   (stale export) — the callout fires on fresh rot, not a stale export.
+   (stale export), and a read-only treasury line reading the agent's
+   Monad balance and transaction count live from RPC.
 2. **Policy-as-ACs** (`/policy`) — the policy file's hand-tier rules, run
    as assertions against real logged decisions. The rules are declarative
    JSON (`data/poker-rules.json`), not Go code. Currently catches 1 real
@@ -34,7 +39,10 @@ framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
 3. **Review Queue** (`/review`) — 25 real hands where the agent and the
    shadow-LLM disagreed, with accept/reject buttons (htmx partial swap).
    Verdicts persist to disk and survive a restart. Rejecting a hand also
-   feeds the pattern buckets below.
+   feeds the pattern buckets below. When `SEKATS_JURY_CONTRACT` is set,
+   each row also carries permissionless **juror verdicts** — any visitor's
+   wallet can side with the agent or the shadow on Monad, and tallies are
+   read back from the chain.
 4. **Promotion Pipeline** (`/promotions`) — the closed loop: rejections on
    a repeated pattern (default: 3 per pattern) auto-draft a policy edit
    into `postflop.promotedFromHandReviews` (the same section the agent's
@@ -176,7 +184,9 @@ The submitting account must be the contract owner or an approver. This does
 
 Without relay configuration, local approvals still work but carry no
 cryptographic human-approval proof. For the previously deployed permissionless
-contract, explicitly set `SEKATS_ATTEST_LEGACY=true`; it retains the old
+contract
+([`0x06bce5d59bf854d6e2900d71af3093270dc2c3bf`](https://monadscan.com/address/0x06bce5d59bf854d6e2900d71af3093270dc2c3bf)),
+explicitly set `SEKATS_ATTEST_LEGACY=true`; it retains the old
 `sekats-attestation/v1` service-only path, not wallet proof or policy lineage.
 Do not use that flag against the redesigned contract.
 
