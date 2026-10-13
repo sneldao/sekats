@@ -1,18 +1,6 @@
-// Package attest anchors human-approved policy edits on Monad.
-//
-// When a policy draft is approved, the console builds a canonical
-// attestation document (the exact draft contents a human signed off on),
-// hashes it with SHA-256, and writes that digest into the
-// SekatsAttestations contract on-chain. The console itself never holds
-// funds and never mutates the agent — the anchor is a one-way proof that
-// "this exact policy change was approved, by this attester, at this
-// time", verifiable by anyone who re-hashes the served document.
-//
-// Signing is delegated to `cast send` (Foundry): sekats stays
-// dependency-light and the private key lives only in the operator's
-// environment, never in the repo or in the data files. When no signer is
-// configured the feature degrades honestly — approvals still work, the
-// UI says anchoring is unconfigured.
+// Package attest verifies wallet approvals and relays document and policy
+// hashes on Monad. It also supports an explicitly configured legacy contract.
+// It never writes agent policy files. Anchored lineage does not prove execution.
 package attest
 
 import (
@@ -24,7 +12,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -34,15 +24,27 @@ import (
 
 // Record is the durable outcome of anchoring one approved draft.
 type Record struct {
-	DraftID    string     `json:"draft_id"`
-	DocSHA256  string     `json:"doc_sha256"` // sha256 hex of the canonical Doc
-	Chain      string     `json:"chain"`
-	Contract   string     `json:"contract,omitempty"`
-	TxHash     string     `json:"tx_hash,omitempty"`
-	Attester   string     `json:"attester,omitempty"`
-	Status     string     `json:"status"` // "anchored" or "failed"
-	Error      string     `json:"error,omitempty"`
-	AnchoredAt *time.Time `json:"anchored_at,omitempty"`
+	DraftID    string         `json:"draft_id"`
+	DocSHA256  string         `json:"doc_sha256"` // sha256 hex of the canonical Doc
+	Chain      string         `json:"chain"`
+	Contract   string         `json:"contract,omitempty"`
+	TxHash     string         `json:"tx_hash,omitempty"`
+	Attester   string         `json:"attester,omitempty"`
+	Status     string         `json:"status"` // "anchored" or "failed"
+	Error      string         `json:"error,omitempty"`
+	AnchoredAt *time.Time     `json:"anchored_at,omitempty"`
+	Signature  string         `json:"signature,omitempty"`
+	DocSchema  string         `json:"doc_schema,omitempty"`
+	Policies   []PolicyRecord `json:"policies,omitempty"`
+}
+
+type PolicyRecord struct {
+	PolicySHA256 string    `json:"policy_sha256"`
+	TxHash       string    `json:"tx_hash,omitempty"`
+	Attester     string    `json:"attester,omitempty"`
+	Status       string    `json:"status"`
+	Error        string    `json:"error,omitempty"`
+	RecordedAt   time.Time `json:"recorded_at"`
 }
 
 // Doc is the canonical attestation payload — the preimage of the
@@ -95,8 +97,8 @@ func DraftKey(draftID string) [32]byte {
 // DocHash is the digest anchored on-chain.
 func DocHash(doc []byte) [32]byte { return sha256.Sum256(doc) }
 
-// Anchorer submits attestation transactions. Implementations must not
-// retain key material beyond the lifetime of one call.
+// Anchorer preserves the legacy transaction interface. SignedAnchorer extends
+// it with locally verified human signatures and policy-file lineage.
 type Anchorer interface {
 	// Anchor writes docHash under draftKey; returns tx hash and attester.
 	Anchor(ctx context.Context, draftKey, docHash [32]byte) (txHash, attester string, err error)
@@ -107,6 +109,13 @@ type Anchorer interface {
 	// ExplorerTX renders an explorer URL for a tx, "" when no explorer
 	// is configured.
 	ExplorerTX(txHash string) string
+}
+
+type SignedAnchorer interface {
+	Anchorer
+	SigningConfig() SigningConfig
+	AnchorWithSig(context.Context, [32]byte, [32]byte, string) (string, error)
+	AnchorPolicy(context.Context, [32]byte, [32]byte) (string, string, error)
 }
 
 // Store persists one Record per draft, flushed on every write — same
@@ -144,6 +153,7 @@ func (s *Store) For(draftID string) (Record, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	r, ok := s.records[draftID]
+	r.Policies = append([]PolicyRecord(nil), r.Policies...)
 	return r, ok
 }
 
@@ -164,15 +174,41 @@ func (s *Store) AnchoredCount() int {
 func (s *Store) Put(r Record) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.records[r.DraftID] = r
+	r.Policies = append([]PolicyRecord(nil), r.Policies...)
 	if s.path == "" {
+		s.records[r.DraftID] = r
 		return nil
 	}
-	b, err := json.MarshalIndent(s.records, "", "  ")
+	next := make(map[string]Record, len(s.records)+1)
+	for id, record := range s.records {
+		next[id] = record
+	}
+	next[r.DraftID] = r
+	b, err := json.MarshalIndent(next, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.path, b, 0o644)
+	// Atomic replacement avoids a truncated approval record after a crash.
+	f, err := os.CreateTemp(filepath.Dir(s.path), ".attestations-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+	if _, err = f.Write(b); err == nil {
+		err = f.Sync()
+	}
+	closeErr := f.Close()
+	if err != nil {
+		return err
+	}
+	if closeErr != nil {
+		return closeErr
+	}
+	if err := os.Rename(f.Name(), s.path); err != nil {
+		return err
+	}
+	s.records = next
+	return nil
 }
 
 // FromEnv resolves anchoring config. Returns nil (disabled) when
@@ -191,19 +227,53 @@ func FromEnv() (Anchorer, error) {
 	if _, err := exec.LookPath(bin); err != nil {
 		return nil, fmt.Errorf("cast not found (%s): install Foundry to enable anchoring", bin)
 	}
-	return &CastAnch{
+	legacy := os.Getenv("SEKATS_ATTEST_LEGACY") == "true"
+	cfg := SigningConfig{
+		Contract: contract, RPC: envOr("SEKATS_RPC", "https://rpc.monad.xyz"),
+		Explorer: envOr("SEKATS_EXPLORER", "https://monadscan.com"),
+	}
+	chain, err := strconv.ParseUint(envOr("SEKATS_CHAIN_ID", "143"), 10, 64)
+	if err != nil || chain == 0 {
+		return nil, fmt.Errorf("invalid SEKATS_CHAIN_ID")
+	}
+	cfg.ChainID = chain
+	for _, addr := range strings.Split(os.Getenv("SEKATS_APPROVERS"), ",") {
+		if addr = strings.TrimSpace(addr); addr != "" {
+			cfg.Approvers = append(cfg.Approvers, addr)
+		}
+	}
+	if !legacy {
+		if err := cfg.Validate(); err != nil {
+			return nil, err
+		}
+	}
+	c := &CastAnch{
 		RPC:          envOr("SEKATS_RPC", "https://rpc.monad.xyz"),
 		ContractAddr: contract,
 		Key:          key,
 		Bin:          bin,
-		Chain:        "Monad (chain 143)",
+		Chain:        fmt.Sprintf("Monad (chain %d)", chain),
 		Explorer:     envOr("SEKATS_EXPLORER", "https://monadscan.com"),
-	}, nil
+		Config:       cfg,
+	}
+	if legacy {
+		// The wrapper intentionally does not implement SignedAnchorer.
+		return legacyAnch{c}, nil
+	}
+	return c, nil
 }
 
-// CastAnch anchors via `cast send`. The key is passed to cast's argv for
-// the duration of the call only — use a dedicated low-balance attester
-// key, never the agent's wallet key.
+type legacyAnch struct{ c *CastAnch }
+
+func (l legacyAnch) Anchor(ctx context.Context, key, hash [32]byte) (string, string, error) {
+	return l.c.anchorLegacy(ctx, key, hash)
+}
+func (l legacyAnch) ChainName() string           { return l.c.ChainName() }
+func (l legacyAnch) Contract() string            { return l.c.Contract() }
+func (l legacyAnch) ExplorerTX(tx string) string { return l.c.ExplorerTX(tx) }
+
+// CastAnch delegates relay signing to cast. Key material never appears in argv,
+// persisted records, or returned subprocess output.
 type CastAnch struct {
 	RPC          string
 	ContractAddr string
@@ -211,6 +281,7 @@ type CastAnch struct {
 	Bin          string
 	Chain        string
 	Explorer     string
+	Config       SigningConfig
 }
 
 func (c *CastAnch) ChainName() string { return c.Chain }
@@ -229,36 +300,110 @@ type castReceipt struct {
 	Status          string `json:"status"`
 }
 
-// Anchor submits anchor(draftKey, docHash) and waits for the receipt.
+func (c *CastAnch) SigningConfig() SigningConfig { return c.Config }
+
+// Anchor is deliberately unavailable for the redesigned contract.
 func (c *CastAnch) Anchor(ctx context.Context, draftKey, docHash [32]byte) (string, string, error) {
-	args := []string{
-		"send", c.ContractAddr,
-		"anchor(bytes32,bytes32)",
-		"0x" + hex.EncodeToString(draftKey[:]),
-		"0x" + hex.EncodeToString(docHash[:]),
-		"--rpc-url", c.RPC,
-		"--private-key", c.Key,
-		"--json",
-	}
+	return "", "", fmt.Errorf("human wallet signature required")
+}
+
+func (c *CastAnch) send(ctx context.Context, method string, params ...string) (castReceipt, error) {
+	args := append([]string{"send", c.ContractAddr, method}, params...)
+	args = append(args, "--rpc-url", c.RPC, "--chain", strconv.FormatUint(c.Config.ChainID, 10), "--json")
 	cmd := exec.CommandContext(ctx, c.Bin, args...)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	cmd.Env = append(os.Environ(), "ETH_PRIVATE_KEY="+c.Key)
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return "", "", fmt.Errorf("cast send: %v — %s", err, strings.TrimSpace(stderr.String()))
+		return castReceipt{}, fmt.Errorf("cast send failed: %v", err)
 	}
 	var rc castReceipt
 	if err := json.Unmarshal(stdout.Bytes(), &rc); err != nil {
-		return "", "", fmt.Errorf("parse cast receipt: %v — raw: %.200s", err, stdout.String())
+		return rc, fmt.Errorf("invalid cast receipt")
 	}
-	if rc.Status != "0x1" {
-		return rc.TransactionHash, rc.From, fmt.Errorf("tx %s reverted", rc.TransactionHash)
+	if rc.Status != "0x1" || rc.TransactionHash == "" {
+		return rc, fmt.Errorf("transaction reverted or receipt incomplete")
 	}
+	return rc, nil
+}
 
+func (c *CastAnch) anchorLegacy(ctx context.Context, draftKey, docHash [32]byte) (string, string, error) {
+	rc, err := c.send(ctx, "anchor(bytes32,bytes32)", Hex32(draftKey), Hex32(docHash))
+	if err != nil {
+		return rc.TransactionHash, rc.From, err
+	}
 	// Read back anchored(draftKey) and compare. A mined tx is not proof:
 	// the contract address could be wrong, empty, or on another chain —
 	// the whole point of the feature is verification, so verify.
 	if err := c.verifyOnChain(ctx, draftKey, docHash); err != nil {
 		return rc.TransactionHash, rc.From, fmt.Errorf("tx %s mined but read-back failed: %v", rc.TransactionHash, err)
+	}
+	return rc.TransactionHash, rc.From, nil
+}
+
+func (c *CastAnch) checkChain(ctx context.Context) error {
+	out, err := exec.CommandContext(ctx, c.Bin, "chain-id", "--rpc-url", c.RPC).Output()
+	if err != nil || strings.TrimSpace(string(out)) != strconv.FormatUint(c.Config.ChainID, 10) {
+		return fmt.Errorf("RPC chain does not match signing domain")
+	}
+	return nil
+}
+
+func (c *CastAnch) call(ctx context.Context, method string, params ...string) (string, error) {
+	args := append([]string{"call", c.ContractAddr, method}, params...)
+	args = append(args, "--rpc-url", c.RPC)
+	out, err := exec.CommandContext(ctx, c.Bin, args...).Output()
+	if err != nil {
+		return "", fmt.Errorf("contract read-back failed")
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func (c *CastAnch) AnchorWithSig(ctx context.Context, key, hash [32]byte, sig string) (string, error) {
+	signer, err := c.Config.VerifySignature(key, hash, sig)
+	if err != nil {
+		return "", err
+	}
+	if err := c.checkChain(ctx); err != nil {
+		return "", err
+	}
+	rc, err := c.send(ctx, "anchorWithSig(bytes32,bytes32,bytes)", Hex32(key), Hex32(hash), sig)
+	if err != nil {
+		return rc.TransactionHash, err
+	}
+	if err := c.verifyOnChain(ctx, key, hash); err != nil {
+		return rc.TransactionHash, err
+	}
+	got, err := c.call(ctx, "attesters(bytes32)(address)", Hex32(key))
+	if err != nil || !strings.EqualFold(got, signer) {
+		return rc.TransactionHash, fmt.Errorf("attester read-back does not match human signer")
+	}
+	return rc.TransactionHash, nil
+}
+
+func (c *CastAnch) AnchorPolicy(ctx context.Context, key, hash [32]byte) (string, string, error) {
+	if err := c.checkChain(ctx); err != nil {
+		return "", "", err
+	}
+	before, err := c.call(ctx, "policyCount(bytes32)(uint256)", Hex32(key))
+	if err != nil {
+		return "", "", err
+	}
+	// cast decorates large uint256 values with a decimal annotation.
+	fields := strings.Fields(before)
+	if len(fields) == 0 {
+		return "", "", fmt.Errorf("invalid policy count")
+	}
+	if _, err := strconv.ParseUint(fields[0], 10, 64); err != nil {
+		return "", "", fmt.Errorf("invalid policy count")
+	}
+	rc, err := c.send(ctx, "anchorPolicy(bytes32,bytes32)", Hex32(key), Hex32(hash))
+	if err != nil {
+		return rc.TransactionHash, rc.From, err
+	}
+	got, err := c.call(ctx, "policyHistory(bytes32,uint256)(bytes32)", Hex32(key), fields[0])
+	if err != nil || !strings.EqualFold(got, Hex32(hash)) {
+		return rc.TransactionHash, rc.From, fmt.Errorf("policy history read-back mismatch")
 	}
 	return rc.TransactionHash, rc.From, nil
 }

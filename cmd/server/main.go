@@ -54,7 +54,9 @@ type app struct {
 	promoteThreshold int
 	anchorer         attest.Anchorer // nil = on-chain anchoring disabled
 	attests          *attest.Store
-	attestExplorer   string // base URL for tx links, even when signing is off
+	attestExplorer   string     // base URL for tx links, even when signing is off
+	approvalMu       sync.Mutex // serialize approval/discard/relay transitions
+	policyFile       string     // operator-configured resulting policy, never a client path
 }
 
 // dataSource is the current view over the agent's data. In live mode the
@@ -118,6 +120,7 @@ func main() {
 		promoteThreshold: threshold,
 		attests:          attest.NewStore(filepath.Join(dataDir, "attestations.json")),
 		attestExplorer:   envOr("SEKATS_EXPLORER", "https://monadscan.com"),
+		policyFile:       os.Getenv("SEKATS_POLICY_FILE"),
 	}
 	if err := a.promos.Load(); err != nil {
 		log.Printf("loading promotion state: %v", err)
@@ -481,6 +484,8 @@ type draftCard struct {
 	AttTxURL     string // explorer link for the anchor tx, "" if none
 	AttTxShort   string
 	AttHashShort string
+	WalletOn     bool
+	PolicyOn     bool
 }
 
 func (a *app) card(d engine.Draft) draftCard {
@@ -490,6 +495,8 @@ func (a *app) card(d engine.Draft) draftCard {
 		Patch:    string(patch),
 		Target:   a.adapter.PolicyTarget(),
 		AnchorOn: a.anchorer != nil,
+		WalletOn: a.signedAnchorer() != nil,
+		PolicyOn: a.signedAnchorer() != nil && a.policyFile != "",
 	}
 	if rec, ok := a.attests.For(d.ID); ok {
 		c.Att, c.AttOK = rec, true
@@ -511,7 +518,7 @@ func (a *app) card(d engine.Draft) draftCard {
 // and records the outcome. No-op when no signer is configured — the
 // draft is still approved and the UI says anchoring is off.
 func (a *app) anchorDraft(d engine.Draft) {
-	if a.anchorer == nil || d.Status != engine.DraftApproved {
+	if a.anchorer == nil || a.signedAnchorer() != nil || d.Status != engine.DraftApproved {
 		return
 	}
 	if rec, ok := a.attests.For(d.ID); ok && rec.Status == "anchored" {
@@ -601,6 +608,11 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := parts[1]
+	switch parts[2] {
+	case "typed-data", "signature", "applied":
+		a.handleSignedApproval(w, r, id, parts[2])
+		return
+	}
 
 	if r.Method == http.MethodGet {
 		d, ok := a.promos.Draft(id)
@@ -616,12 +628,7 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 			enc.SetIndent("", "  ")
 			enc.Encode(d.Patch())
 		case "attestation":
-			doc, err := attest.DocFor(d)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusConflict)
-				return
-			}
-			docBytes, err := doc.CanonicalJSON()
+			docBytes, err := a.approvalDocument(d)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -638,6 +645,12 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.NotFound(w, r)
+		return
+	}
+	a.approvalMu.Lock()
+	defer a.approvalMu.Unlock()
+	if a.signedAnchorer() != nil && (parts[2] == "approve" || parts[2] == "attest") {
+		http.Error(w, "use Approve with wallet; human signature required", http.StatusConflict)
 		return
 	}
 	var (
