@@ -225,3 +225,16 @@ On-chain, verified end-to-end on Monad mainnet (2026-10-13):
   served doc's sha256 — and the Anchor call itself enforces this
   read-back, so a mined-but-wrong anchor records `failed`, not a
   phantom success.
+
+### Deployment (2026-10-13)
+
+Public demo at https://console.sekats.thisyearnofear.com — `snel-bot`,
+`/opt/sekats-console`, `sekats-console.service` (Go binary on
+`127.0.0.1:8766`, nginx + certbot). Runs fixture mode (`SEKATS_DB=off`)
+with `SEKATS_ATTEST=off` — the parlor holds no signer keys, same
+credential-free rule as the QC canary; the recorded anchor (tx
+`0x3299f04a…c072` on contract `0x06bce5d5…c3bf`) displays from the synced
+`data/attestations.json` with a monadscan link. Deploy flow: cross-compile
+`CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/server-linux
+./cmd/server` (remote Go is 1.22, too old), rsync tree + `data/` state,
+`systemctl restart sekats-console`.
