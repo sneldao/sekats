@@ -225,6 +225,12 @@ On-chain, verified end-to-end on Monad mainnet (2026-10-13):
   served doc's sha256 — and the Anchor call itself enforces this
   read-back, so a mined-but-wrong anchor records `failed`, not a
   phantom success.
+- v2 contract (EIP-712 signed approvals + policy lineage) deployed at
+  `0x771a99F24E7Cd81d0937edcb797138AAC228FDfE` (tx
+  `0xf5113a6b8255a7b9e4d14e7843fffee551cc7ac6efefa9181bb6c97568c080cd`,
+  owner = attester). `setApprover` registered the attester wallet
+  (tx `0xe63fed71…36ac2`); additional human wallets are added by owner
+  call. The v1 contract stays valid for `SEKATS_ATTEST_LEGACY=true`.
 
 ### Deployment (2026-10-13)
 
