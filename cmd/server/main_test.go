@@ -293,3 +293,30 @@ func TestAdapterStateAndLiveIsolation(t *testing.T) {
 		t.Fatal("fixture-only adapter accepted a poker live DB")
 	}
 }
+
+func TestJuryVerdictMarkupGatedByContract(t *testing.T) {
+	off := pipelineApp(t, fixtureDir(t), poker.New())
+	w := request(t, off.handleReview, "GET", "/review")
+	if strings.Contains(w.Body.String(), "data-jury-vote") {
+		t.Fatal("jury buttons rendered without a configured contract")
+	}
+	on := pipelineApp(t, fixtureDir(t), poker.New())
+	on.juryContract = "0x00000000000000000000000000000000000000aa"
+	on.publicRPC = "https://rpc.monad.xyz"
+	on.attestExplorer = "https://monadscan.com"
+	t.Setenv("SEKATS_CHAIN_ID", "")
+	w = request(t, on.handleReview, "GET", "/review")
+	body := w.Body.String()
+	for _, want := range []string{"data-jury-vote=\"1\"", "data-jury-vote=\"2\"", "jury.js", "data-jury-contract", "data-jury-chain=\"143\"", "jury-tally"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("review page missing %q", want)
+		}
+	}
+	// The htmx-swapped row after a verdict keeps its jury wiring.
+	_, _, _, _, _, queue := on.data.Snapshot()
+	id := queue.All()[0].DecisionID
+	w = request(t, on.handleReviewAction, "POST", fmt.Sprintf("/review/%d/accept", id))
+	if !strings.Contains(w.Body.String(), "data-jury-key") {
+		t.Fatal("swapped row lost jury key")
+	}
+}

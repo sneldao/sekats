@@ -27,5 +27,14 @@
       data-testid="reject-btn"
       class="btn btn-reject">Reject (LLM right)</button>
   </div>
+  {{if .JuryOn}}
+  <div class="jury-row" data-jury-key="{{.JuryKey}}">
+    <span class="jury-label">Jury</span>
+    <button type="button" class="btn btn-jury" data-jury-vote="1">Side with agent</button>
+    <button type="button" class="btn btn-jury" data-jury-vote="2">Side with shadow</button>
+    <span class="jury-tally" data-jury-tally>checking chain…</span>
+    <span class="jury-status" data-jury-status role="status"></span>
+  </div>
+  {{end}}
 </div>
 {{end}}

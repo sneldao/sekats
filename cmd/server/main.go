@@ -58,6 +58,7 @@ type app struct {
 	attests          *attest.Store
 	attestExplorer   string // base URL for tx links, even when signing is off
 	attestContract   string // read-only config, independent of signing
+	juryContract     string // permissionless juror-verdict contract, "" = off
 	publicRPC        string
 	treasury         *monad.TreasuryReader
 	approvalMu       sync.Mutex // serialize approval/discard/relay transitions
@@ -127,6 +128,7 @@ func main() {
 		attests:          attest.NewStore(filepath.Join(ds.stateDir, "attestations.json")),
 		attestExplorer:   envOr("SEKATS_EXPLORER", "https://monadscan.com"),
 		attestContract:   os.Getenv("SEKATS_ATTEST_CONTRACT"),
+		juryContract:     os.Getenv("SEKATS_JURY_CONTRACT"),
 		publicRPC:        envOr("SEKATS_PUBLIC_RPC", "https://rpc.monad.xyz"),
 		treasury:         monad.NewTreasuryReader(envOr("SEKATS_RPC", "https://rpc.monad.xyz"), os.Getenv("SEKATS_AGENT_ADDRESS")),
 		policyFile:       os.Getenv("SEKATS_POLICY_FILE"),
@@ -371,20 +373,59 @@ func (a *app) handlePolicy(w http.ResponseWriter, r *http.Request) {
 	}{Report: rep, PolicyFile: a.adapter.PolicyFile(), Labels: a.adapter.Labels()})
 }
 
+// reviewRow wraps a queue item with the permissionless juror-verdict
+// wiring: JuryKey is the contract's bytes32 key for this decision.
+type reviewRow struct {
+	review.Item
+	JuryKey string
+	JuryOn  bool
+}
+
+// juryView is the page-level contract wiring for juror verdicts —
+// everything the browser needs to send and read its own transaction.
+type juryView struct {
+	On       bool
+	Contract string
+	RPC      string
+	ChainID  string // decimal chain id
+	Explorer string
+}
+
+func (a *app) jury() juryView {
+	return juryView{
+		On:       a.juryContract != "",
+		Contract: a.juryContract,
+		RPC:      a.publicRPC,
+		ChainID:  envOr("SEKATS_CHAIN_ID", "143"),
+		Explorer: strings.TrimRight(a.attestExplorer, "/"),
+	}
+}
+
+func (a *app) rowFor(it review.Item) reviewRow {
+	return reviewRow{Item: it, JuryKey: fmt.Sprintf("0x%x", attest.DecisionKey(it.DecisionID)), JuryOn: a.juryContract != ""}
+}
+
 func (a *app) handleReview(w http.ResponseWriter, r *http.Request) {
 	a.data.Refresh(a.adapter)
 	_, _, _, _, _, queue := a.data.Snapshot()
 	pending, accepted, rejected := queue.Counts()
+	items := queue.All()
+	rows := make([]reviewRow, len(items))
+	for i, it := range items {
+		rows[i] = a.rowFor(it)
+	}
 	a.renderPage(w, "page-review", "Review Queue", struct {
-		Items    []review.Item
+		Items    []reviewRow
 		Pending  int
 		Accepted int
 		Rejected int
+		Jury     juryView
 	}{
-		Items:    queue.All(),
+		Items:    rows,
 		Pending:  pending,
 		Accepted: accepted,
 		Rejected: rejected,
+		Jury:     a.jury(),
 	})
 }
 
@@ -452,7 +493,7 @@ func (a *app) handleReviewAction(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	err = a.tmpl.ExecuteTemplate(w, "review-action-response", struct {
-		Item   review.Item
+		Item   reviewRow
 		Counts struct {
 			Pending  int
 			Accepted int
@@ -460,7 +501,7 @@ func (a *app) handleReviewAction(w http.ResponseWriter, r *http.Request) {
 		}
 		Draft *engine.Draft
 	}{
-		Item: item,
+		Item: a.rowFor(item),
 		Counts: struct {
 			Pending  int
 			Accepted int

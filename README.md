@@ -123,6 +123,8 @@ needed. Other env vars:
   is needed. Missing/invalid config shows `not configured`; failed reads show
   `RPC unavailable`, never a fabricated zero. Transaction count is the wallet's
   outgoing nonce, not its incoming transfers.
+- `SEKATS_JURY_CONTRACT` — `SekatsJury` address enabling permissionless
+  juror verdicts on `/review`; unset hides the buttons.
 - `SEKATS_PUBLIC_RPC` — public browser verification RPC, default
   `https://rpc.monad.xyz`. This URL is exposed in HTML, JSON and cast commands;
   use only a public, unauthenticated endpoint that allows browser CORS.
@@ -151,8 +153,9 @@ run is a no-op), and refuses unknown schemas.
 
 ## Human-signed approval and policy lineage (Monad)
 
-The redesigned `contracts/SekatsAttestations.sol` requires a **new deployment**.
-No deployment was performed for this change. It removes permissionless anchoring:
+The redesigned `contracts/SekatsAttestations.sol` is deployed at
+[`0x771a99F24E7Cd81d0937edcb797138AAC228FDfE`](https://monadscan.com/address/0x771a99F24E7Cd81d0937edcb797138AAC228FDfE)
+(Monad mainnet, chain 143). It removes permissionless anchoring:
 the owner manages approvers, and `anchorWithSig` accepts only an authorized
 EIP-712 `Approval(bytes32 draftKey,bytes32 docHash)` signature. First approval
 wins. The event records both human signer and transaction relayer.
@@ -182,6 +185,25 @@ configuration, build-only deployment instructions, exact test commands, and the
 registry worker's ABI migration. See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)
 for what signatures and lineage prove, and what they do not. Keep operator
 routes behind access control.
+
+## Juror verdicts (permissionless)
+
+`contracts/SekatsJury.sol` is the open counterpart to the gated attestation
+registry, deployed at
+[`0x0A8753aEE7684f8fB7773EfDD104B61C92fC9A14`](https://monadscan.com/address/0x0A8753aEE7684f8fB7773EfDD104B61C92fC9A14).
+Anyone may record which side of an agent/shadow-LLM disagreement they endorse:
+`attest(bytes32 decisionKey, uint8 verdict)` where `decisionKey` is
+`sha256("sekats/decision/" + decisionID)`, `1` sides with the agent and `2`
+with the shadow reviewer. `msg.sender` is the juror — the visitor's wallet
+sends the transaction directly, so it works on a signer-free host and needs
+no server configuration beyond the address.
+
+Set `SEKATS_JURY_CONTRACT` to enable the **Side with agent / Side with
+shadow** buttons under each review row; tallies are read back client-side
+from `SEKATS_PUBLIC_RPC` (`tally(bytes32)`), so displayed counts are chain
+truth, not server claims. A juror may change their vote; counts move.
+Observing is open by design — promoting policy stays behind the
+approver allowlist.
 
 ## Reuse the read-only verifier
 

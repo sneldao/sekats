@@ -231,6 +231,12 @@ On-chain, verified end-to-end on Monad mainnet (2026-10-13):
   owner = attester). `setApprover` registered the attester wallet
   (tx `0xe63fed71…36ac2`); additional human wallets are added by owner
   call. The v1 contract stays valid for `SEKATS_ATTEST_LEGACY=true`.
+- `SekatsJury` (permissionless juror verdicts on review rows) deployed
+  at `0x0A8753aEE7684f8fB7773EfDD104B61C92fC9A14` (tx `0x24395f77…dfe6`,
+  no owner). First live verdict recorded on decision `25962` — `tally`
+  reads `(1, 0)` after tx `0xe18fd10d…edd75`. Enabled on hosts via
+  `SEKATS_JURY_CONTRACT`; jurors send their own txs, so the signer-free
+  parlor can offer it too.
 
 ### Deployment (2026-10-13)
 

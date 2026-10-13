@@ -143,6 +143,23 @@ h1 { margin-bottom: 4px; }
 .btn-accept:hover { border-color: var(--accent); color: var(--accent); }
 .btn-reject:hover { border-color: var(--danger); color: var(--danger); }
 
+/* Permissionless jury verdicts (SekatsJury) */
+.jury-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 12px;
+}
+.jury-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; }
+.btn-jury { padding: 4px 10px; font-size: 12px; }
+.btn-jury:hover { border-color: var(--accent); color: var(--accent); }
+.jury-tally { color: var(--muted); font-family: monospace; }
+.jury-status { color: var(--muted); }
+.jury-status a { color: var(--accent); }
+
 /* Data-source badge (Quality Surface) */
 .source-badge {
   border: 1px solid var(--border);

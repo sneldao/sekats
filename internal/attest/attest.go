@@ -94,6 +94,12 @@ func DraftKey(draftID string) [32]byte {
 	return sha256.Sum256([]byte("sekats/draft/" + draftID))
 }
 
+// DecisionKey derives the SekatsJury contract's bytes32 key for a review
+// decision id — the same domain-separation scheme as DraftKey.
+func DecisionKey(decisionID int64) [32]byte {
+	return sha256.Sum256([]byte("sekats/decision/" + strconv.FormatInt(decisionID, 10)))
+}
+
 // DocHash is the digest anchored on-chain.
 func DocHash(doc []byte) [32]byte { return sha256.Sum256(doc) }
 

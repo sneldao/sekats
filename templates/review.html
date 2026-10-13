@@ -6,11 +6,14 @@
   {{template "review-counts-inner" .}}
 </section>
 
-<div id="review-list" data-testid="review-list">
+<div id="review-list" data-testid="review-list"{{if .Jury.On}}
+  data-jury-contract="{{.Jury.Contract}}" data-jury-rpc="{{.Jury.RPC}}"
+  data-jury-chain="{{.Jury.ChainID}}" data-jury-explorer="{{.Jury.Explorer}}"{{end}}>
   {{range .Items}}{{template "review-row" .}}{{end}}
 </div>
 
 {{/* Slot for the out-of-band "policy edit drafted" toast that the
      reject response swaps in when a pattern crosses the threshold. */}}
 <div id="draft-toast"></div>
+{{if .Jury.On}}<script type="module" src="/static/js/jury.js"></script>{{end}}
 {{end}}

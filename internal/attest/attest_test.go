@@ -75,6 +75,20 @@ func TestDraftKeyAndHashStable(t *testing.T) {
 	}
 }
 
+func TestDecisionKeyDomainSeparated(t *testing.T) {
+	k := DecisionKey(42)
+	if len(k) != 32 {
+		t.Fatal("bad digest length")
+	}
+	if DecisionKey(42) == DecisionKey(43) {
+		t.Fatal("decision keys collide")
+	}
+	// A decision id must never collide with a draft id of the same digits.
+	if DecisionKey(42) == DraftKey("42") {
+		t.Fatal("decision/draft key spaces collide")
+	}
+}
+
 func TestStoreRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	s := NewStore(dir + "/attestations.json")
