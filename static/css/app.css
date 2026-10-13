@@ -217,3 +217,13 @@ h1 { margin-bottom: 4px; }
 }
 .attest-ok { background: rgba(110, 231, 183, 0.15); color: var(--accent); }
 .attest-bad { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+
+/* Read-only anchors registry */
+.anchor-details { font-size: 13px; }
+.anchor-details dt { color: var(--muted); margin-top: 10px; }
+.anchor-details dd { margin: 4px 0; overflow-wrap: anywhere; }
+.anchor-row a { color: var(--accent); }
+.cast-call { overflow-wrap: anywhere; word-break: break-all; }
+.verify-match { background: rgba(110, 231, 183, 0.15); color: var(--accent); }
+.verify-mismatch { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+.verify-not-found, .verify-unavailable { background: var(--border); color: var(--muted); }

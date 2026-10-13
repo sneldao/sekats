@@ -1,0 +1,34 @@
+{{define "page-anchors"}}
+<h1>Anchors Registry</h1>
+<p class="subtitle">Every successful anchor in the persisted attestation store. Verification reads Monad directly from your browser, with no wallet or signature.</p>
+<section class="source-badge">
+  Public RPC: <code>{{.RPC}}</code> · <a href="/api/anchors">Registry JSON</a>
+  <p class="muted">The document's exact bytes and draft key are hashed locally. Green means the document matches the contract getter, red means mismatch, grey means not found or verification unavailable. Trust your chosen RPC and independently confirm the contract address, not the server's stored hash. The getter does not verify the listed attester or transaction.</p>
+</section>
+<div id="anchors-registry" data-rpc="{{.RPC}}">
+  {{range .Anchors}}
+  <section class="draft-card anchor-row" data-draft-id="{{.DraftID}}" data-contract="{{.Contract}}" data-doc-url="{{.DocURL}}">
+    <h2><code>{{.DraftID}}</code></h2>
+    <dl class="anchor-details">
+      <dt>draftKey</dt><dd><code>{{.DraftKey}}</code></dd>
+      <dt>docHash</dt><dd><code>{{.DocHash}}</code></dd>
+      <dt>Attester</dt><dd><code>{{if .Attester}}{{.Attester}}{{else}}not recorded{{end}}</code></dd>
+      <dt>Contract</dt><dd><code>{{if .Contract}}{{.Contract}}{{else}}not configured{{end}}</code></dd>
+      <dt>Transaction</dt><dd>{{if .TxURL}}<a href="{{.TxURL}}" target="_blank" rel="noopener noreferrer"><code>{{.TxHash}}</code></a>{{else}}not recorded{{end}}</dd>
+      {{if .AnchoredAt}}<dt>Anchored at</dt><dd>{{.AnchoredAt.Format "2006-01-02 15:04:05 UTC"}}</dd>{{end}}
+    </dl>
+    <p><a href="{{.DocURL}}">Canonical attestation document</a></p>
+    {{if .CastCall}}
+    <pre class="patch-pre cast-call">{{.CastCall}}</pre>
+    <button class="btn copy-call" type="button">Copy cast call</button>
+    {{else}}<p class="muted">Cast call unavailable: contract or public RPC not configured.</p>{{end}}
+    <button class="btn verify-anchor" type="button">Verify in browser</button>
+    <span class="attest-badge verify-unavailable" role="status" aria-live="polite">Not verified</span>
+    <p class="muted verify-detail"></p>
+  </section>
+  {{else}}
+  <p class="muted" data-testid="anchors-empty">No anchored drafts in the persisted store. Signing may be off; read-only verification never needs a private key.</p>
+  {{end}}
+</div>
+<script type="module" src="/static/js/anchors.js"></script>
+{{end}}
