@@ -1,13 +1,16 @@
 {{define "review-row"}}
 <div class="review-item verdict-{{.Verdict}}" id="review-item-{{.DecisionID}}" data-testid="review-item" data-decision-id="{{.DecisionID}}" data-verdict="{{.Verdict}}">
   <div class="review-item-head">
-    <span class="hand-code">{{.HandCode}}</span>
-    <span class="street">{{.Street}}</span>
-    <span class="pot">pot {{.Pot}}</span>
+    <span class="hand-code">{{.Review.ContextCode}}</span>
+    <span class="street">{{.Review.Phase}}</span>
+    {{if .Labels.Metric}}<span class="pot">{{.Labels.Metric}} {{.Pot}}</span>{{end}}
     <span class="verdict-badge">{{.Verdict}}</span>
   </div>
   <div class="review-item-body">
     <p><strong>Agent:</strong> {{.OurAction}} &mdash; <strong>Shadow-LLM:</strong> {{.LLMAction}}</p>
+    {{if .Inputs}}<pre class="decision-inputs">Inputs: {{printf "%s" .Inputs}}</pre>{{end}}
+    {{if .AgentRationale}}<p><strong>Agent rationale:</strong> {{.AgentRationale}}</p>{{end}}
+    {{if .Outcome}}<p><strong>Outcome:</strong> {{.Outcome}}</p>{{end}}
     <pre class="llm-rationale">{{.ResponseText}}</pre>
   </div>
   <div class="review-item-actions">

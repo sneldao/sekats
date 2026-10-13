@@ -35,18 +35,7 @@ func Run(a adapters.Adapter, dataDir string, decisions []store.Decision) (Report
 
 	ds := make([]engine.Decision, len(decisions))
 	for i, d := range decisions {
-		ds[i] = engine.Decision{
-			ID:          d.ID,
-			DecidedAt:   d.DecidedAt,
-			Phase:       d.Street,
-			ContextCode: d.HandCode,
-			Action:      d.Action,
-			Amount:      d.Amount,
-			Pot:         d.Pot,
-			Source:      d.Source,
-			Accepted:    d.Accepted,
-			Error:       d.Error,
-		}
+		ds[i] = d.EngineDecision()
 	}
 	return engine.RunRules(rules, pol, ds), nil
 }

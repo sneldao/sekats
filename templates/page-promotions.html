@@ -12,7 +12,7 @@
   {{range .Cards}}{{template "promotion-card" .}}{{end}}
 </div>
 {{else}}
-<p class="empty-state" data-testid="no-drafts">No drafts yet. Reject {{.Threshold}} hands on the same pattern in the <a href="/review">Review Queue</a> and a policy edit is auto-drafted here.</p>
+<p class="empty-state" data-testid="no-drafts">No drafts yet. Reject {{.Threshold}} decisions on the same pattern in the <a href="/review">Review Queue</a> and a policy edit is auto-drafted here.</p>
 {{end}}
 
 <h2 class="section-title">Patterns accumulating rejections</h2>

@@ -24,7 +24,11 @@ type JoinError struct {
 // BuildReport joins the recorded verdicts against the disagreement fixture
 // rows. Verdicts that reference a decision ID absent from the fixtures are
 // surfaced in Missing rather than silently dropped.
-func BuildReport(queued []store.Disagreement, entries []Entry) (string, []JoinError) {
+func BuildReport(queued []store.Disagreement, entries []Entry, labels ...store.Labels) (string, []JoinError) {
+	display := store.Labels{Context: "Hand", Phase: "Street", Metric: "Pot"}
+	if len(labels) > 0 {
+		display = labels[0]
+	}
 	byID := make(map[int64]store.Disagreement, len(queued))
 	for _, d := range queued {
 		byID[d.DecisionID] = d
@@ -58,7 +62,7 @@ func BuildReport(queued []store.Disagreement, entries []Entry) (string, []JoinEr
 	var b strings.Builder
 	b.WriteString("# Sekats — Human Verdict Report\n\n")
 	fmt.Fprintf(&b, "Generated: %s\n\n", time.Now().UTC().Format(time.RFC1123))
-	fmt.Fprintf(&b, "These are the calls a human made on the review queue: for each hand where the agent's action and the shadow-LLM review disagreed, which side did the human side with.\n\n")
+	fmt.Fprintf(&b, "These are the calls a human made on the review queue: for each decision where the agent's action and the shadow-LLM review disagreed, which side did the human side with.\n\n")
 
 	total := len(rows)
 	fmt.Fprintf(&b, "| Agent (accepted) | Shadow-LLM (rejected) | Total |\n|---|---|---|\n| %d | %d | %d |\n\n", accepted, rejected, total)
@@ -74,8 +78,16 @@ func BuildReport(queued []store.Disagreement, entries []Entry) (string, []JoinEr
 			if r.e.Verdict == "rejected" {
 				who = "the shadow-LLM was right"
 			}
-			fmt.Fprintf(&b, "### %s on %s (%s) — %s\n\n", r.e.Verdict, r.d.HandCode, r.d.Street, who)
-			fmt.Fprintf(&b, "- Agent action: `%s`  |  Shadow-LLM action: `%s`  |  Pot: %.2f\n", r.d.OurAction, r.d.LLMAction, r.d.Pot)
+			normalized := r.d.Review()
+			fmt.Fprintf(&b, "### %s on %s (%s) — %s\n\n", r.e.Verdict, normalized.ContextCode, normalized.Phase, who)
+			fmt.Fprintf(&b, "- Agent action: `%s`  |  Shadow-LLM action: `%s`", r.d.OurAction, r.d.LLMAction)
+			if display.Metric != "" {
+				fmt.Fprintf(&b, "  |  %s: %.2f", display.Metric, r.d.Pot)
+			}
+			b.WriteString("\n")
+			if len(r.d.Inputs) > 0 {
+				fmt.Fprintf(&b, "- Inputs: `%s`\n- Agent rationale: %s\n- Outcome: %s\n", r.d.Inputs, r.d.AgentRationale, r.d.Outcome)
+			}
 			fmt.Fprintf(&b, "- Recorded: %s\n\n", r.e.RecordedAt.Format("2006-01-02 15:04 UTC"))
 			if rt := strings.TrimSpace(r.d.ResponseText); rt != "" {
 				b.WriteString("Shadow-LLM response (trimmed):\n\n```\n")
@@ -94,7 +106,7 @@ func BuildReport(queued []store.Disagreement, entries []Entry) (string, []JoinEr
 	}
 
 	if total == 0 {
-		b.WriteString("_No verdicts recorded yet. Adjudicate hands on the Review Queue screen; this report regenerates from the saved verdict file._\n")
+		b.WriteString("_No verdicts recorded yet. Adjudicate decisions on the Review Queue screen; this report regenerates from the saved verdict file._\n")
 	}
 
 	return b.String(), missing

@@ -16,6 +16,7 @@ data/pattern_rejections.json
 data/policy_drafts.json
 data/policy-patches/
 data/attestations.json
+data/state/
 
 # Foundry build artifacts for the attestation contract.
 contracts/out/

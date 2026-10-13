@@ -15,7 +15,7 @@
   <p class="muted">Target: <code>{{.Target}}</code> — appended to the agent's policy file when the patch is applied.</p>
 
   <table class="evidence-table" data-testid="draft-evidence">
-    <thead><tr><th>Decision</th><th>Hand</th><th>Phase</th><th>Agent &rarr; Shadow</th><th>Pot</th><th>Shadow rationale</th><th>Recorded</th></tr></thead>
+    <thead><tr><th>Decision</th><th>{{.Labels.Context}}</th><th>{{.Labels.Phase}}</th><th>Agent &rarr; Shadow</th>{{if .Labels.Metric}}<th>{{.Labels.Metric}}</th>{{end}}<th>Shadow rationale</th><th>Recorded</th></tr></thead>
     <tbody>
       {{range .Draft.Evidence}}
       <tr data-testid="evidence-row">
@@ -23,7 +23,7 @@
         <td>{{.ContextCode}}</td>
         <td>{{.Phase}}</td>
         <td>{{.OurAction}} &rarr; {{.LLMAction}}</td>
-        <td>{{.Pot}}</td>
+        {{if $.Labels.Metric}}<td>{{.Pot}}</td>{{end}}
         <td class="evidence-rationale">{{if .Rationale}}{{.Rationale}}{{else}}—{{end}}</td>
         <td>{{.RecordedAt.Format "2006-01-02 15:04"}}</td>
       </tr>
@@ -40,7 +40,7 @@
   <div class="patch-block" data-testid="draft-patch">
     <p class="muted">Patch ready — download it, then apply on the agent host:</p>
     <pre class="patch-pre" data-testid="draft-patch-json">{{.Patch}}</pre>
-    <p class="muted"><code>python3 tools/apply_policy_draft.py {{.Draft.ID}}.policy-patch.json /path/to/poker-policy.json</code></p>
+    <p class="muted"><code>python3 tools/apply_policy_draft.py {{.Draft.ID}}.policy-patch.json /path/to/{{.PolicyFile}}</code></p>
     <p><a class="btn btn-export" href="/promotions/{{.Draft.ID}}/patch" data-testid="patch-download">Download patch JSON</a>
        <a class="btn" href="/promotions/{{.Draft.ID}}/attestation" data-testid="attestation-doc">Attestation doc</a></p>
   </div>

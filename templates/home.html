@@ -1,14 +1,14 @@
 {{define "page-home"}}
 <h1>Quality Surface</h1>
-<p class="subtitle">Live signal from the agent's own decision log — not a mock.</p>
+<p class="subtitle">{{.Agent}} · {{if .Source.Synthetic}}Synthetic decisions for an offline pipeline demonstration.{{else}}Live signal from the agent's own decision log — not a mock.{{end}}</p>
 
 <div class="source-badge" data-testid="source-badge">
   {{if eq .Source.Kind "live"}}
   <span class="src-pill src-live" data-testid="source-live">LIVE</span>
   read-only bridge to the agent's decision log — {{.Source.Freshness}} · latest decision <code>#{{.Source.LatestDecisionID}}</code>{{if .Source.LatestDecisionAt}} ({{.Source.LatestDecisionAt}}){{end}}
   {{else}}
-  <span class="src-pill src-frozen" data-testid="source-frozen">FROZEN</span>
-  {{.Source.Freshness}} · latest decision <code>#{{.Source.LatestDecisionID}}</code> · run <code>tools/sync_live.sh</code> to go live
+  <span class="src-pill src-frozen" data-testid="source-frozen">{{if .Source.Synthetic}}SYNTHETIC{{else}}FROZEN{{end}}</span>
+  {{.Source.Freshness}} · latest decision <code>#{{.Source.LatestDecisionID}}</code>{{if .Source.SupportsLive}} · run <code>tools/sync_live.sh</code> to go live{{end}}
   {{end}}
 </div>
 

@@ -1,32 +1,63 @@
-// Package store loads the frozen fixture data exported from the DevFun
-// Arena poker agent's SQLite database. All data here is a snapshot, not a
-// live connection — see docs/PLAN.md for why.
+// Package store defines the shared console data shape. The original poker
+// export fields remain readable for backwards compatibility; other adapters
+// use Phase, ContextCode, Inputs, Rationale, and Outcome.
 package store
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+
+	"github.com/sneldao/sekats/internal/engine"
 )
+
+// Labels is the display vocabulary supplied by a domain adapter.
+// An empty Metric hides the legacy numeric value column.
+type Labels struct {
+	Context string
+	Phase   string
+	Metric  string
+}
 
 // Decision is one row from our_decisions, as produced by
 // poker/tools/export_scenarios.py. The frozen export predates the id and
 // decided_at columns here (they read zero in fixture mode); the live bridge
 // (internal/live) populates them.
 type Decision struct {
-	ID        int64    `json:"id"`
-	DecidedAt int64    `json:"decided_at"`
-	Mode      string   `json:"mode"`
-	Street    string   `json:"street"`
-	HandCode  string   `json:"hand_code"`
-	BoardJSON string   `json:"board_json"`
-	Pot       float64  `json:"pot"`
-	LegalJSON string   `json:"legal_json"`
-	Action    string   `json:"action"`
-	Amount    *float64 `json:"amount"`
-	Source    string   `json:"source"`
-	Accepted  int      `json:"accepted"`
-	Error     *string  `json:"error"`
+	Phase       string          `json:"phase,omitempty"`
+	ContextCode string          `json:"context_code,omitempty"`
+	Inputs      json.RawMessage `json:"inputs,omitempty"`
+	Rationale   string          `json:"rationale,omitempty"`
+	Outcome     string          `json:"outcome,omitempty"`
+	ID          int64           `json:"id"`
+	DecidedAt   int64           `json:"decided_at"`
+	Mode        string          `json:"mode"`
+	Street      string          `json:"street"`
+	HandCode    string          `json:"hand_code"`
+	BoardJSON   string          `json:"board_json"`
+	Pot         float64         `json:"pot"`
+	LegalJSON   string          `json:"legal_json"`
+	Action      string          `json:"action"`
+	Amount      *float64        `json:"amount"`
+	Source      string          `json:"source"`
+	Accepted    int             `json:"accepted"`
+	Error       *string         `json:"error"`
+}
+
+// EngineDecision normalizes both the generic schema and legacy poker export.
+func (d Decision) EngineDecision() engine.Decision {
+	phase, code := d.Phase, d.ContextCode
+	if phase == "" {
+		phase = d.Street
+	}
+	if code == "" {
+		code = d.HandCode
+	}
+	return engine.Decision{
+		ID: d.ID, DecidedAt: d.DecidedAt, Phase: phase, ContextCode: code,
+		Action: d.Action, Amount: d.Amount, Pot: d.Pot, Source: d.Source,
+		Accepted: d.Accepted, Error: d.Error,
+	}
 }
 
 // PolicySuggestion is one row from policy_suggestions. created_at is stored
@@ -80,13 +111,34 @@ type PreflopActionCount struct {
 // Disagreement is one real hand where the agent and the shadow-LLM review
 // disagreed on the action.
 type Disagreement struct {
-	OurAction    string  `json:"our_action"`
-	LLMAction    string  `json:"llm_action"`
-	HandCode     string  `json:"hand_code"`
-	Street       string  `json:"street"`
-	Pot          float64 `json:"pot"`
-	ResponseText string  `json:"response_text"`
-	DecisionID   int64   `json:"decision_id"`
+	Phase          string          `json:"phase,omitempty"`
+	ContextCode    string          `json:"context_code,omitempty"`
+	Inputs         json.RawMessage `json:"inputs,omitempty"`
+	AgentRationale string          `json:"agent_rationale,omitempty"`
+	Outcome        string          `json:"outcome,omitempty"`
+	OurAction      string          `json:"our_action"`
+	LLMAction      string          `json:"llm_action"`
+	HandCode       string          `json:"hand_code"`
+	Street         string          `json:"street"`
+	Pot            float64         `json:"pot"`
+	ResponseText   string          `json:"response_text"`
+	DecisionID     int64           `json:"decision_id"`
+}
+
+// Review normalizes the context fields without requiring poker-shaped fixtures.
+func (d Disagreement) Review() engine.Review {
+	phase, code := d.Phase, d.ContextCode
+	if phase == "" {
+		phase = d.Street
+	}
+	if code == "" {
+		code = d.HandCode
+	}
+	return engine.Review{
+		DecisionID: d.DecisionID, Phase: phase, ContextCode: code,
+		OurAction: d.OurAction, LLMAction: d.LLMAction, Pot: d.Pot,
+		ResponseText: d.ResponseText,
+	}
 }
 
 // QualityStats mirrors the top-level shape of quality_stats.json.
@@ -121,6 +173,7 @@ type Policy struct {
 // read-only after Load — the review queue's mutable state lives separately
 // in internal/review.
 type Store struct {
+	Synthetic bool // explicitly labelled in the source badge
 	Decisions DecisionsExport
 	Quality   QualityStats
 	Policy    Policy

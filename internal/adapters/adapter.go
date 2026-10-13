@@ -18,6 +18,8 @@ import (
 	"sync"
 
 	"github.com/sneldao/sekats/internal/engine"
+	"github.com/sneldao/sekats/internal/live"
+	"github.com/sneldao/sekats/internal/store"
 )
 
 // Adapter bridges one domain to the engine.
@@ -26,6 +28,10 @@ type Adapter interface {
 	Name() string
 	// Agent is the display name for the UI.
 	Agent() string
+	// LoadFixtures translates domain fixtures into the shared store shape.
+	LoadFixtures(dataDir string) (*store.Store, error)
+	// Labels supplies domain-specific context, phase, and optional metric names.
+	Labels() store.Labels
 	// PolicyFile / RulesFile are the data-dir file names of the agent's
 	// policy and declarative acceptance criteria.
 	PolicyFile() string
@@ -42,6 +48,13 @@ type Adapter interface {
 	// PolicyTarget is the dot path in the policy doc where approved drafts
 	// land.
 	PolicyTarget() string
+}
+
+// LiveAdapter is optional: only adapters implementing it may open a live
+// snapshot. This prevents a fixture-only agent from ingesting another domain's DB.
+type LiveAdapter interface {
+	DefaultLiveFile() string
+	LoadLive(path string) (*store.Store, *live.SourceInfo, error)
 }
 
 var (

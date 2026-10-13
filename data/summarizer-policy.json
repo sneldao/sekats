@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "description": "Synthetic document-summary agent. Actions: publish, revise, withhold. No external document or account access.",
+  "review": {
+    "requireRevision": ["unsupported_claim", "missing_attribution"],
+    "requireWithhold": ["sensitive_record"],
+    "promotedFromDecisionReviews": []
+  }
+}
