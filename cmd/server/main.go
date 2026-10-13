@@ -148,7 +148,7 @@ func main() {
 
 	log.Printf("sekats listening on %s (data=%s, adapter=%s, source=%s)", addr, dataDir, ad.Name(), ds.src.Kind)
 	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatal()
+		log.Fatalf("serve %s: %v", addr, err)
 	}
 }
 
