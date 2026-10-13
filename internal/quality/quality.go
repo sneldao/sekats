@@ -29,6 +29,8 @@ type Surface struct {
 // they are: "live" (a read-only bridge over a synced snapshot of the
 // agent's SQLite log) or "fixture" (the frozen export in data/).
 type SourceInfo struct {
+	Synthetic        bool
+	SupportsLive     bool
 	Kind             string // "live" or "fixture"
 	Freshness        string // human line, e.g. "synced 2026-08-26 18:39 UTC"
 	LatestDecisionID int64

@@ -1,6 +1,6 @@
 {{define "page-policy"}}
 <h1>Policy-as-ACs</h1>
-<p class="subtitle">The agent's own strategy manual (poker-policy.json), turned into checkable assertions and run against real logged decisions.</p>
+<p class="subtitle">The agent's policy ({{.PolicyFile}}), turned into checkable assertions and run against logged decisions.</p>
 
 <section class="grid">
   <div class="card" data-testid="policy-summary-card">
@@ -23,7 +23,7 @@
 <h2>Violations</h2>
 {{if .Report.Violations}}
 <table class="violations-table" data-testid="violations-table">
-  <thead><tr><th>Rule</th><th>Hand</th><th>Street</th><th>Action</th><th>Pot</th><th>Detail</th></tr></thead>
+  <thead><tr><th>Rule</th><th>{{.Labels.Context}}</th><th>{{.Labels.Phase}}</th><th>Action</th>{{if .Labels.Metric}}<th>{{.Labels.Metric}}</th>{{end}}<th>Detail</th></tr></thead>
   <tbody>
     {{range .Report.Violations}}
     <tr>
@@ -31,7 +31,7 @@
       <td>{{.ContextCode}}</td>
       <td>{{.Phase}}</td>
       <td>{{.Action}}</td>
-      <td>{{.Pot}}</td>
+      {{if $.Labels.Metric}}<td>{{.Pot}}</td>{{end}}
       <td>{{.Detail}}</td>
     </tr>
     {{end}}

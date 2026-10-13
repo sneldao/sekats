@@ -1,8 +1,8 @@
 {{define "page-trends"}}
 <h1>Trends</h1>
 <p class="subtitle">
-  Real shadow-LLM suggestion activity from the fixture and the
-  disagreement-action pattern matrix behind the 84.3% headline.
+  Shadow-review suggestion activity from the selected dataset and the
+  disagreement-action pattern matrix behind the {{printf "%.1f" .AgreementRatePct}}% snapshot.
   All computed by deterministic code — no model generated these numbers.
 </p>
 
@@ -74,13 +74,13 @@
   <div class="card">
     <h3>Top Disagreement</h3>
     <p class="big-number">{{.TopDisagreeCount}}</p>
-    <p class="muted">single pattern count (bet vs check)</p>
+    <p class="muted">largest disagreeing action-pair count</p>
   </div>
 </div>
 
 <p class="muted" style="margin-top:16px">
   Note: the fixture does not carry per-review timestamps, so an agreement-rate
   over-time chart would be fabricated. The timeline above shows policy-suggestion
-  creation events (real epoch-ms), not per-review agreement drift.
+  creation events (logged epoch-ms), not per-review agreement drift.
 </p>
 {{end}}

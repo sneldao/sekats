@@ -1,4 +1,4 @@
-// Package review implements the human review queue: real hands where the
+// Package review implements the human review queue: decisions where the
 // agent's decision and the shadow-LLM review disagreed, with a human
 // accept/reject verdict recorded against each one.
 //
@@ -27,6 +27,7 @@ const (
 type Item struct {
 	store.Disagreement
 	Verdict Verdict
+	Labels  store.Labels
 }
 
 // Queue holds the review items and guards concurrent access from HTTP
@@ -39,10 +40,14 @@ type Queue struct {
 
 // NewQueue seeds a queue from the disagreement fixtures, all starting
 // pending.
-func NewQueue(disagreements []store.Disagreement) *Queue {
+func NewQueue(disagreements []store.Disagreement, labels ...store.Labels) *Queue {
+	display := store.Labels{Context: "Context", Phase: "Phase"}
+	if len(labels) > 0 {
+		display = labels[0]
+	}
 	q := &Queue{items: make([]Item, 0, len(disagreements))}
 	for _, d := range disagreements {
-		q.items = append(q.items, Item{Disagreement: d, Verdict: VerdictPending})
+		q.items = append(q.items, Item{Disagreement: d, Verdict: VerdictPending, Labels: display})
 	}
 	return q
 }

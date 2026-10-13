@@ -32,6 +32,7 @@ import (
 
 	"github.com/sneldao/sekats/internal/adapters"
 	"github.com/sneldao/sekats/internal/adapters/poker"
+	"github.com/sneldao/sekats/internal/adapters/summarizer"
 	"github.com/sneldao/sekats/internal/attest"
 	"github.com/sneldao/sekats/internal/engine"
 	"github.com/sneldao/sekats/internal/live"
@@ -64,6 +65,7 @@ type app struct {
 type dataSource struct {
 	mu       sync.Mutex
 	dataDir  string
+	stateDir string
 	livePath string // "" = fixture mode
 	lastSync time.Time
 	verdicts *verdicts.Store
@@ -111,12 +113,12 @@ func main() {
 		data:    ds,
 		vStore:  ds.verdicts,
 		promos: promotion.NewStore(
-			filepath.Join(dataDir, "pattern_rejections.json"),
-			filepath.Join(dataDir, "policy_drafts.json"),
+			filepath.Join(ds.stateDir, "pattern_rejections.json"),
+			filepath.Join(ds.stateDir, "policy_drafts.json"),
 			ad.NewDraft,
 		),
 		promoteThreshold: threshold,
-		attests:          attest.NewStore(filepath.Join(dataDir, "attestations.json")),
+		attests:          attest.NewStore(filepath.Join(ds.stateDir, "attestations.json")),
 		attestExplorer:   envOr("SEKATS_EXPLORER", "https://monadscan.com"),
 	}
 	if err := a.promos.Load(); err != nil {
@@ -154,33 +156,48 @@ func main() {
 
 func init() {
 	adapters.Register(poker.New())
+	adapters.Register(summarizer.New())
 }
 
 // newDataSource loads fixtures or the live bridge and derives the initial
 // screens. Live mode: SEKATS_DB (or the default data/live/arena-poker.sqlite3)
 // when the file exists; SEKATS_DB=off forces fixtures.
 func newDataSource(dataDir string, ad adapters.Adapter) (*dataSource, error) {
-	vs := verdicts.NewStore(filepath.Join(dataDir, "verdicts.json"))
+	// Preserve poker's existing state files. Other domains get independent
+	// state even when fixtures share DATA_DIR and decision IDs overlap.
+	stateDir := dataDir
+	if ad.Name() != poker.Name {
+		stateDir = filepath.Join(dataDir, "state", ad.Name())
+		if err := os.MkdirAll(stateDir, 0o755); err != nil {
+			return nil, err
+		}
+	}
+	vs := verdicts.NewStore(filepath.Join(stateDir, "verdicts.json"))
 	if err := vs.Load(); err != nil {
 		log.Printf("loading verdicts: %v", err)
 	}
-	ds := &dataSource{dataDir: dataDir, verdicts: vs}
+	ds := &dataSource{dataDir: dataDir, stateDir: stateDir, verdicts: vs}
 
 	dbPath := ""
+	loader, supportsLive := ad.(adapters.LiveAdapter)
 	switch v := os.Getenv("SEKATS_DB"); {
 	case v == "off":
 		// operator forced fixture mode; no auto-detect
+	case !supportsLive:
+		if v != "" {
+			return nil, fmt.Errorf("adapter %s does not support SEKATS_DB; use SEKATS_DB=off", ad.Name())
+		}
 	case v != "":
 		dbPath = v
 	default:
 		// unset: auto-detect a synced snapshot in data/live/
-		if p := filepath.Join(dataDir, "live", "arena-poker.sqlite3"); statOK(p) {
+		if p := filepath.Join(dataDir, loader.DefaultLiveFile()); statOK(p) {
 			dbPath = p
 		}
 	}
 
 	if dbPath != "" {
-		if st, info, err := live.Load(dbPath); err != nil {
+		if st, info, err := loader.LoadLive(dbPath); err != nil {
 			log.Printf("live bridge: %v — falling back to frozen fixtures", err)
 		} else {
 			fi, _ := os.Stat(dbPath)
@@ -196,7 +213,7 @@ func newDataSource(dataDir string, ad adapters.Adapter) (*dataSource, error) {
 		}
 	}
 
-	st, err := store.Load(dataDir)
+	st, err := ad.LoadFixtures(dataDir)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +229,18 @@ func newDataSource(dataDir string, ad adapters.Adapter) (*dataSource, error) {
 			latestID = d.DecisionID
 		}
 	}
-	ds.src = quality.SourceInfo{Kind: "fixture", Freshness: freshness, LatestDecisionID: latestID}
+	for _, d := range st.Decisions.RecentDecisions {
+		if d.ID > latestID {
+			latestID = d.ID
+		}
+	}
+	if st.Synthetic {
+		freshness = "synthetic offline fixture, not production activity"
+	}
+	ds.src = quality.SourceInfo{
+		Kind: "fixture", Freshness: freshness, LatestDecisionID: latestID,
+		Synthetic: st.Synthetic, SupportsLive: supportsLive,
+	}
 	ds.rebuild(ad)
 	return ds, nil
 }
@@ -228,6 +256,7 @@ func sourceInfoLive(info *live.SourceInfo) quality.SourceInfo {
 		Freshness:        "synced " + info.SyncedAt.UTC().Format("2006-01-02 15:04 MST"),
 		LatestDecisionID: info.LatestDecisionID,
 		LatestDecisionAt: info.LatestDecisionAt.Format("2006-01-02 15:04 UTC"),
+		SupportsLive:     true,
 	}
 }
 
@@ -242,7 +271,7 @@ func (ds *dataSource) rebuild(ad adapters.Adapter) {
 		ds.rep = rep
 	}
 	ds.trend = trends.Build(ds.st.Decisions.PolicySuggestions, ds.st.Quality)
-	ds.queue = review.NewQueue(ds.st.Quality.DisagreementsSample)
+	ds.queue = review.NewQueue(ds.st.Quality.DisagreementsSample, ad.Labels())
 	for _, e := range ds.verdicts.All() {
 		ds.queue.SetVerdict(e.DecisionID, review.Verdict(e.Verdict))
 	}
@@ -264,7 +293,11 @@ func (ds *dataSource) Refresh(ad adapters.Adapter) {
 	if ds.lastSync.Equal(fi.ModTime()) {
 		return
 	}
-	st, info, err := live.Load(ds.livePath)
+	loader, ok := ad.(adapters.LiveAdapter)
+	if !ok {
+		return
+	}
+	st, info, err := loader.LoadLive(ds.livePath)
 	if err != nil {
 		log.Printf("live bridge refresh: %v — keeping previous data", err)
 		return
@@ -294,6 +327,7 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 	a.renderPage(w, "page-home", "Quality Surface", struct {
 		Surface    quality.Surface
 		Source     quality.SourceInfo
+		Agent      string
 		Promotions struct {
 			Staged   int
 			Approved int
@@ -303,6 +337,7 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 	}{
 		Surface: surf,
 		Source:  src,
+		Agent:   a.adapter.Agent(),
 		Promotions: struct {
 			Staged   int
 			Approved int
@@ -316,8 +351,10 @@ func (a *app) handlePolicy(w http.ResponseWriter, r *http.Request) {
 	a.data.Refresh(a.adapter)
 	_, _, _, rep, _, _ := a.data.Snapshot()
 	a.renderPage(w, "page-policy", "Policy-as-ACs", struct {
-		Report policy.Report
-	}{Report: rep})
+		Report     policy.Report
+		PolicyFile string
+		Labels     store.Labels
+	}{Report: rep, PolicyFile: a.adapter.PolicyFile(), Labels: a.adapter.Labels()})
 }
 
 func (a *app) handleReview(w http.ResponseWriter, r *http.Request) {
@@ -437,19 +474,12 @@ func (a *app) recordPatternRejection(id int64) *engine.Draft {
 	if row.DecisionID == 0 {
 		return nil
 	}
-	key := a.adapter.PatternKey(engine.Review{
-		DecisionID:   id,
-		Phase:        row.Street,
-		ContextCode:  row.HandCode,
-		OurAction:    row.OurAction,
-		LLMAction:    row.LLMAction,
-		Pot:          row.Pot,
-		ResponseText: row.ResponseText,
-	})
+	normalized := row.Review()
+	key := a.adapter.PatternKey(normalized)
 	ev := engine.Evidence{
 		DecisionID:  id,
-		Phase:       row.Street,
-		ContextCode: row.HandCode,
+		Phase:       normalized.Phase,
+		ContextCode: normalized.ContextCode,
 		OurAction:   row.OurAction,
 		LLMAction:   row.LLMAction,
 		Pot:         row.Pot,
@@ -481,15 +511,19 @@ type draftCard struct {
 	AttTxURL     string // explorer link for the anchor tx, "" if none
 	AttTxShort   string
 	AttHashShort string
+	Labels       store.Labels
+	PolicyFile   string
 }
 
 func (a *app) card(d engine.Draft) draftCard {
 	patch, _ := json.MarshalIndent(d.Patch(), "", "  ")
 	c := draftCard{
-		Draft:    d,
-		Patch:    string(patch),
-		Target:   a.adapter.PolicyTarget(),
-		AnchorOn: a.anchorer != nil,
+		Draft:      d,
+		Patch:      string(patch),
+		Target:     a.adapter.PolicyTarget(),
+		AnchorOn:   a.anchorer != nil,
+		Labels:     a.adapter.Labels(),
+		PolicyFile: a.adapter.PolicyFile(),
 	}
 	if rec, ok := a.attests.For(d.ID); ok {
 		c.Att, c.AttOK = rec, true
@@ -752,7 +786,7 @@ func (a *app) handleExport(w http.ResponseWriter, r *http.Request) {
 func (a *app) handleVerdicts(w http.ResponseWriter, r *http.Request) {
 	a.data.Refresh(a.adapter)
 	st, _, src, _, _, _ := a.data.Snapshot()
-	reportMarkdown, _ := verdicts.BuildReport(st.Quality.DisagreementsSample, a.vStore.All())
+	reportMarkdown, _ := verdicts.BuildReport(st.Quality.DisagreementsSample, a.vStore.All(), a.adapter.Labels())
 	// Render markdown as plain text in a pre tag for simplicity; a full
 	// markdown-to-HTML renderer would be overkill for a console screen.
 	htmlContent := `<!doctype html>
@@ -775,28 +809,42 @@ func (a *app) handleVerdicts(w http.ResponseWriter, r *http.Request) {
 
 // exportItemJSON is the serialisable shape for one review item.
 type exportItemJSON struct {
-	DecisionID int64   `json:"decision_id"`
-	HandCode   string  `json:"hand_code"`
-	Street     string  `json:"street"`
-	Pot        float64 `json:"pot"`
-	OurAction  string  `json:"our_action"`
-	LLMAction  string  `json:"llm_action"`
-	Response   string  `json:"llm_response"`
-	Verdict    string  `json:"verdict"`
+	Phase          string          `json:"phase,omitempty"`
+	ContextCode    string          `json:"context_code,omitempty"`
+	Inputs         json.RawMessage `json:"inputs,omitempty"`
+	AgentRationale string          `json:"agent_rationale,omitempty"`
+	Outcome        string          `json:"outcome,omitempty"`
+	DecisionID     int64           `json:"decision_id"`
+	HandCode       string          `json:"hand_code,omitempty"`
+	Street         string          `json:"street,omitempty"`
+	Pot            *float64        `json:"pot,omitempty"`
+	OurAction      string          `json:"our_action"`
+	LLMAction      string          `json:"llm_action"`
+	Response       string          `json:"llm_response"`
+	Verdict        string          `json:"verdict"`
 }
 
 func toExportJSON(items []review.Item) []exportItemJSON {
 	out := make([]exportItemJSON, len(items))
 	for i, it := range items {
 		out[i] = exportItemJSON{
-			DecisionID: it.DecisionID,
-			HandCode:   it.HandCode,
-			Street:     it.Street,
-			Pot:        it.Pot,
-			OurAction:  it.OurAction,
-			LLMAction:  it.LLMAction,
-			Response:   it.ResponseText,
-			Verdict:    string(it.Verdict),
+			Phase:          it.Phase,
+			ContextCode:    it.ContextCode,
+			Inputs:         it.Inputs,
+			AgentRationale: it.AgentRationale,
+			Outcome:        it.Outcome,
+			DecisionID:     it.DecisionID,
+			HandCode:       it.HandCode,
+			Street:         it.Street,
+			OurAction:      it.OurAction,
+			LLMAction:      it.LLMAction,
+			Response:       it.ResponseText,
+			Verdict:        string(it.Verdict),
+		}
+		if it.Labels.Metric != "" || it.HandCode != "" || it.Street != "" {
+			// Preserve the legacy poker export, including zero-valued pots.
+			pot := it.Pot
+			out[i].Pot = &pot
 		}
 	}
 	return out

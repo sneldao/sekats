@@ -1,4 +1,4 @@
-// Package poker is the first (and for now only) sekats adapter: the DevFun
+// Package poker is the first sekats adapter: the DevFun
 // Arena poker agent. It encodes the domain knowledge the engine stays
 // agnostic to:
 //
@@ -20,6 +20,8 @@ import (
 	"time"
 
 	"github.com/sneldao/sekats/internal/engine"
+	"github.com/sneldao/sekats/internal/live"
+	"github.com/sneldao/sekats/internal/store"
 )
 
 const (
@@ -48,6 +50,20 @@ func (a *Adapter) Agent() string        { return Agent }
 func (a *Adapter) PolicyFile() string   { return PolicyFileName }
 func (a *Adapter) RulesFile() string    { return RulesFileName }
 func (a *Adapter) PolicyTarget() string { return PolicyTarget }
+
+func (a *Adapter) LoadFixtures(dataDir string) (*store.Store, error) {
+	return store.Load(dataDir)
+}
+
+func (a *Adapter) Labels() store.Labels {
+	return store.Labels{Context: "Hand", Phase: "Street", Metric: "Pot"}
+}
+
+func (a *Adapter) DefaultLiveFile() string { return "live/arena-poker.sqlite3" }
+
+func (a *Adapter) LoadLive(path string) (*store.Store, *live.SourceInfo, error) {
+	return live.Load(path)
+}
 
 // preflopLists are the dot-path refs the declarative rules may address.
 // Adding a new checkable section here is the whole change needed to make

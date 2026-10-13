@@ -1,0 +1,16 @@
+[
+  {
+    "name": "unsupported-or-unattributed-summary-must-not-publish",
+    "phase": "Editorial",
+    "actions": ["publish"],
+    "list_ref": "review.requireRevision",
+    "detail": "{{code}} requires revision, but the agent chose {{action}}."
+  },
+  {
+    "name": "sensitive-record-must-not-release",
+    "phase": "Editorial",
+    "actions": ["publish", "revise"],
+    "list_ref": "review.requireWithhold",
+    "detail": "{{code}} requires withholding, but the agent chose {{action}}."
+  }
+]
