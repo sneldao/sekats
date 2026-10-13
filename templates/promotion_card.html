@@ -33,9 +33,14 @@
 
   {{if eq .Draft.Status "pending"}}
   <div class="review-item-actions">
-    <button hx-post="/promotions/{{.Draft.ID}}/approve" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="approve-btn" class="btn btn-accept">Approve edit</button>
+    {{if .WalletOn}}
+    <button type="button" data-wallet-approve="{{.Draft.ID}}" data-testid="wallet-approve-btn" class="btn btn-accept">Approve with wallet</button>
+    {{else}}
+    <button hx-post="/promotions/{{.Draft.ID}}/approve" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="approve-btn" class="btn btn-accept">Approve edit (local/legacy)</button>
+    {{end}}
     <button hx-post="/promotions/{{.Draft.ID}}/discard" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="discard-btn" class="btn btn-reject">Discard</button>
   </div>
+  <p data-wallet-status role="status" aria-live="polite"></p>
   {{else if eq .Draft.Status "approved"}}
   <div class="patch-block" data-testid="draft-patch">
     <p class="muted">Patch ready — download it, then apply on the agent host:</p>
@@ -58,16 +63,24 @@
     <p data-testid="attest-failed">
       <span class="attest-badge attest-bad">ANCHOR FAILED</span>
       {{.Att.Error}}
-      <button hx-post="/promotions/{{.Draft.ID}}/attest" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="attest-retry" class="btn">Retry anchor</button>
+      {{if .WalletOn}}<button type="button" data-wallet-approve="{{.Draft.ID}}" class="btn">Approve with wallet (retry)</button>
+      {{else}}<button hx-post="/promotions/{{.Draft.ID}}/attest" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="attest-retry" class="btn">Retry legacy anchor</button>{{end}}
     </p>
       {{end}}
     {{else if .AnchorOn}}
     <p class="muted" data-testid="attest-pending">Anchor not recorded yet.
-      <button hx-post="/promotions/{{.Draft.ID}}/attest" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="attest-retry" class="btn">Anchor on-chain</button></p>
+      {{if .WalletOn}}<button type="button" data-wallet-approve="{{.Draft.ID}}" class="btn">Approve with wallet</button>
+      {{else}}<button hx-post="/promotions/{{.Draft.ID}}/attest" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="attest-retry" class="btn">Anchor on-chain (legacy)</button>{{end}}</p>
     {{else}}
-    <p class="muted" data-testid="attest-off">On-chain anchoring not configured — set <code>SEKATS_ATTEST_KEY</code> + <code>SEKATS_ATTEST_CONTRACT</code> to anchor approvals on Monad.</p>
+    <p class="muted" data-testid="attest-off">On-chain anchoring not configured. Local approval is not wallet proof. Configure the relay, contract, and <code>SEKATS_APPROVERS</code> to enable signed approvals.</p>
     {{end}}
   </div>
+  {{if and .PolicyOn (eq .Att.Status "anchored")}}
+  <p><button type="button" data-policy-applied="{{.Draft.ID}}" class="btn">Mark applied and anchor policy</button>
+     <span class="muted">Hashes the configured resulting policy file; does not apply the patch.</span></p>
+  {{range .Att.Policies}}<p class="muted">Policy <code>sha256:{{.PolicySHA256}}</code>: {{.Status}}{{if .Error}} ({{.Error}}){{end}}</p>{{end}}
+  {{end}}
+  <p data-wallet-status role="status" aria-live="polite"></p>
   {{else if eq .Draft.Status "discarded"}}
   <p class="muted" data-testid="draft-discarded-note">Discarded — no policy change will be made for this pattern. If the pattern keeps recurring, a new draft will be staged.</p>
   {{end}}

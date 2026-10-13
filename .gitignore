@@ -21,3 +21,5 @@ data/state/
 # Foundry build artifacts for the attestation contract.
 contracts/out/
 contracts/cache/
+contracts/build/
+/cache/

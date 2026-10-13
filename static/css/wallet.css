@@ -1,0 +1,6 @@
+.wallet-dialog{background:#171a21;color:#e6e8ec;border:1px solid #6ee7b7;border-radius:12px;padding:24px;width:min(840px,90vw);max-height:85vh}
+.wallet-dialog::backdrop{background:#000b}
+.wallet-document{white-space:pre-wrap;overflow:auto;max-height:42vh;padding:16px;background:#0f1115;font-size:13px}
+.wallet-domain{overflow-wrap:anywhere}
+.wallet-consent{display:block;margin:16px 0}
+.wallet-actions{display:flex;gap:12px;flex-wrap:wrap}

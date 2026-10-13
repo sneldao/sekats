@@ -232,11 +232,13 @@ func (s *Store) resolve(id string, to string) (engine.Draft, error) {
 		return engine.Draft{}, fmt.Errorf("draft %s is %s, not pending", id, d.Status)
 	}
 	now := time.Now().UTC()
+	previous := d
 	d.Status = to
 	d.ResolvedAt = &now
 	s.drafts[id] = d
 	if err := s.flushLocked(); err != nil {
-		logFlushErr(err)
+		s.drafts[id] = previous
+		return engine.Draft{}, fmt.Errorf("persist draft resolution: %w", err)
 	}
 	return d, nil
 }

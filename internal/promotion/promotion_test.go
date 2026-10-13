@@ -144,6 +144,19 @@ func TestUnknownDraftFails(t *testing.T) {
 	}
 }
 
+func TestResolutionPersistenceFailureKeepsPending(t *testing.T) {
+	store := NewStore("", "", stubFactory)
+	store.RecordRejection("x", evidence(1, "a", "b"), 1)
+	store.draftsPath = t.TempDir() + "/missing/drafts.json"
+	if _, err := store.Approve("x"); err == nil {
+		t.Fatal("approval succeeded without persistence")
+	}
+	d, _ := store.Draft("x")
+	if d.Status != engine.DraftPending || d.ResolvedAt != nil {
+		t.Fatal("failed resolution mutated draft")
+	}
+}
+
 func TestPatternsSorted(t *testing.T) {
 	store := NewStore("", "", stubFactory)
 	store.RecordRejection("low", evidence(1, "a", "b"), 99)

@@ -2,7 +2,11 @@ module github.com/sneldao/sekats
 
 go 1.26.2
 
-require modernc.org/sqlite v1.57.0
+require (
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
+	golang.org/x/crypto v0.48.0
+	modernc.org/sqlite v1.57.0
+)
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect

@@ -41,10 +41,10 @@ framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
    existing promotions live in), with the rejected hands as evidence. A
    human approves (→ downloadable `.policy-patch.json`) or discards.
    Nothing is ever applied automatically. Approvals can additionally be
-   **anchored on Monad**: the canonical attestation doc's SHA-256 is
-   written to the `SekatsAttestations` contract, so the same chain where
-   the agent risks real money also carries the immutable record of which
-   policy changes a human signed off on.
+   **signed with a human wallet and anchored on Monad**: an owner-managed
+   approver signs the canonical document hash with EIP-712. The contract
+   records that signer, not the service relayer. Resulting policy-file
+   hashes can then be anchored as append-only lineage.
 5. **Trends** (`/trends`) — the shadow-LLM suggestion timeline (real
    timestamps from the fixture) and the disagreement pattern matrix
    (bet→check dominates). No fabricated agreement-over-time chart: the
@@ -108,7 +108,13 @@ needed. Other env vars:
 - `SEKATS_PROMOTE_THRESHOLD` — rejections per pattern before a policy edit
   is auto-drafted, default `3`.
 - `SEKATS_ATTEST` — `off` disables on-chain anchoring (default: auto,
-  enabled when `SEKATS_ATTEST_KEY` + `SEKATS_ATTEST_CONTRACT` are set).
+  signed mode requires `SEKATS_ATTEST_KEY`, `SEKATS_ATTEST_CONTRACT`,
+  and `SEKATS_APPROVERS`).
+- `SEKATS_APPROVERS` — comma-separated authorized human wallet addresses.
+- `SEKATS_CHAIN_ID` — signing domain and relay chain ID (default `143`).
+- `SEKATS_ATTEST_LEGACY=true` — explicitly use the old permissionless contract.
+- `SEKATS_POLICY_FILE` — resulting policy file to hash read-only when marked applied.
+- `SEKATS_WALLET_RPC` — public wallet chain-add RPC, separate from service RPC.
 - `SEKATS_RPC` / `SEKATS_EXPLORER` / `CAST_BIN` — anchoring config.
 - `SEKATS_AGENT_ADDRESS` — public agent wallet address for the Quality Surface
   treasury line. Reads `eth_getBalance` and `eth_getTransactionCount` through
@@ -143,47 +149,39 @@ python3 tools/apply_policy_draft.py flop-bet-to-check.policy-patch.json \
 The script appends the entry to the target array, is idempotent (a second
 run is a no-op), and refuses unknown schemas.
 
-## On-chain attestation (Monad)
+## Human-signed approval and policy lineage (Monad)
 
-Approving a draft can anchor it on Monad mainnet (chain 143): the console
-builds a canonical attestation document (`sekats-attestation/v1` — draft
-id, pattern, target, entry, evidence decision ids, approval timestamp),
-serves it byte-stable at `/promotions/{id}/attestation`, and writes its
-SHA-256 into the `SekatsAttestations` contract
-(`contracts/SekatsAttestations.sol`) under the key
-`sha256("sekats/draft/" + draftID)`. Anyone can verify an anchor: hash
-the downloaded doc and compare with `anchored(draftKey)` on the contract.
-One anchor per draft — the first human approval is the one that counts.
+The redesigned `contracts/SekatsAttestations.sol` requires a **new deployment**.
+No deployment was performed for this change. It removes permissionless anchoring:
+the owner manages approvers, and `anchorWithSig` accepts only an authorized
+EIP-712 `Approval(bytes32 draftKey,bytes32 docHash)` signature. First approval
+wins. The event records both human signer and transaction relayer.
 
-Signing is delegated to `cast send` (Foundry); the private key exists
-only in the operator's environment, never in the repo or the data files.
-Without a signer the feature degrades honestly — approvals work, the UI
-says anchoring is off, and `data/attestations.json` records nothing.
+On `/promotions`, **Approve with wallet** displays the exact
+`sekats-approval/v2` canonical document before signing, connects through vanilla
+`window.ethereum`, switches/adds the configured Monad chain, and signs typed
+data. The server rebuilds the document/hash, checks the recovered signer against
+`SEKATS_APPROVERS`, then relays through the existing service configuration.
+The typed-data GET never approves a draft; only a verified signature does.
+Wallet approval requires HTTPS or localhost. No JavaScript build step is needed.
 
-Setup (operator only, not the public parlor):
+After an operator applies the downloaded patch externally, **Mark applied and
+anchor policy** reads `SEKATS_POLICY_FILE`, checks that it contains the approved
+entry, hashes exact resulting file bytes, and appends `anchorPolicy` history.
+The submitting account must be the contract owner or an approver. This does
+**not** prove that a running agent executes the file.
 
-```
-# dedicated low-balance attester key — NOT the agent wallet key
-SEKATS_ATTEST_KEY=0x… tools/deploy_attestations.sh   # prints contract addr
+Without relay configuration, local approvals still work but carry no
+cryptographic human-approval proof. For the previously deployed permissionless
+contract, explicitly set `SEKATS_ATTEST_LEGACY=true`; it retains the old
+`sekats-attestation/v1` service-only path, not wallet proof or policy lineage.
+Do not use that flag against the redesigned contract.
 
-SEKATS_ATTEST_KEY=0x… \
-SEKATS_ATTEST_CONTRACT=0x… \
-./bin/server
-```
-
-Live deployment on Monad mainnet (2026-10-13): contract
-[`0x06bce5d59bf854d6e2900d71af3093270dc2c3bf`](https://monadscan.com/address/0x06bce5d59bf854d6e2900d71af3093270dc2c3bf);
-first anchor [tx
-`0x3299f04a…`](https://monadscan.com/tx/0x3299f04af7c6d14a5ed4bef828498108b9ee4422cd56dc747d3652bc6337c072).
-Every anchor is verified by read-back: `anchored(draftKey)` must equal
-the doc hash, else the record is `failed`, not anchored.
-
-Env: `SEKATS_RPC` (default `https://rpc.monad.xyz`), `SEKATS_EXPLORER`
-(default `https://monadscan.com`), `SEKATS_ATTEST=off` to force-disable,
-`CAST_BIN` to point at a non-PATH cast. A failed anchor is stored as
-`failed` with the error and can be retried with the card's "Retry anchor"
-button (`POST /promotions/{id}/attest`). Fund the attester key with a
-little MON — one anchor costs a fraction of a cent of gas.
+See [docs/SIGNED_APPROVALS.md](docs/SIGNED_APPROVALS.md) for HTTP endpoints,
+configuration, build-only deployment instructions, exact test commands, and the
+registry worker's ABI migration. See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)
+for what signatures and lineage prove, and what they do not. Keep operator
+routes behind access control.
 
 ## Reuse the read-only verifier
 
