@@ -25,11 +25,23 @@ import (
 func fixtureDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
+	// Only copy the tracked fixture inputs — runtime state files
+	// (verdicts, drafts, anchors) are gitignored and would leak a
+	// developer's local server state into test fixtures.
+	stateFiles := map[string]bool{
+		"verdicts.json":           true,
+		"pattern_rejections.json": true,
+		"policy_drafts.json":      true,
+		"attestations.json":       true,
+	}
 	files, err := filepath.Glob("../../data/*.json")
 	if err != nil || len(files) == 0 {
 		t.Fatalf("fixture files: %v", err)
 	}
 	for _, path := range files {
+		if stateFiles[filepath.Base(path)] {
+			continue
+		}
 		raw, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)

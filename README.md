@@ -116,8 +116,9 @@ needed. Other env vars:
 - `SEKATS_PROMOTE_THRESHOLD` — rejections per pattern before a policy edit
   is auto-drafted, default `3`.
 - `SEKATS_ATTEST` — `off` disables on-chain anchoring (default: auto,
-  signed mode requires `SEKATS_ATTEST_KEY`, `SEKATS_ATTEST_CONTRACT`,
-  and `SEKATS_APPROVERS`).
+  signed mode requires `SEKATS_ATTEST_CONTRACT` and `SEKATS_APPROVERS`
+  plus relay credentials: `SEKATS_KEYSTORE` + `SEKATS_KEYSTORE_PASS_FILE`
+  on cast ≥1.5, or `SEKATS_ATTEST_KEY` on older cast).
 - `SEKATS_APPROVERS` — comma-separated authorized human wallet addresses.
 - `SEKATS_CHAIN_ID` — signing domain and relay chain ID (default `143`).
 - `SEKATS_ATTEST_LEGACY=true` — explicitly use the old permissionless contract.

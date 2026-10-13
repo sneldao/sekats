@@ -65,7 +65,9 @@ For an operator's **existing** relay configuration, set:
 
 | Setting | Purpose |
 | --- | --- |
-| `SEKATS_ATTEST_KEY` | Existing service relay credential, configured outside the repo; never a human wallet credential |
+| `SEKATS_ATTEST_KEY` | Existing service relay credential, configured outside the repo; never a human wallet credential. Passed to cast as `ETH_PRIVATE_KEY`, which cast versions ≥1.5 no longer honor — use the keystore settings below instead |
+| `SEKATS_KEYSTORE` | Path to an encrypted keystore file (e.g. `cast wallet import`); preferred relay credential on cast ≥1.5 — keeps key material out of argv and env |
+| `SEKATS_KEYSTORE_PASS_FILE` | Path to the keystore password file, required with `SEKATS_KEYSTORE` |
 | `SEKATS_ATTEST_CONTRACT` | Newly deployed contract address |
 | `SEKATS_APPROVERS` | Comma-separated authorized human wallet addresses; required in signed mode |
 | `SEKATS_CHAIN_ID` | Domain/transaction chain ID, default `143` |

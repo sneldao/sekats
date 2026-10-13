@@ -23,3 +23,12 @@ contracts/out/
 contracts/cache/
 contracts/build/
 /cache/
+
+# demo-video project: commit source, not renders/footage
+videos/*/footage/
+videos/*/renders/
+videos/*/*.mp3
+videos/*/*.webm
+videos/*/capture/
+videos/*/demo-data/
+videos/*/.hyperframes/

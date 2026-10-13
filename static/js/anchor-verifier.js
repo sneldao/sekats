@@ -20,7 +20,7 @@ export async function verifyAnchor({ draftID, docURL, contract, rpc, timeoutMs =
       crypto.subtle.digest("SHA-256", new TextEncoder().encode(`sekats/draft/${draftID}`)).then(hex),
     ]);
     const doc = JSON.parse(new TextDecoder().decode(bytes));
-    if (doc.draft_id !== draftID || doc.schema !== "sekats-attestation/v1") {
+    if (doc.draft_id !== draftID || !/^sekats-(attestation|approval)\/v\d+$/.test(doc.schema)) {
       return { state: "mismatch", message: "Document identity does not match this draft.", docHash, draftKey };
     }
     const response = await fetch(rpc, {

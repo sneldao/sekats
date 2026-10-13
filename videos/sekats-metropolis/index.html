@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 1920px; height: 1080px; overflow: hidden;
+        background: #0F1115;
+        font-family: -apple-system, ui-sans-serif, system-ui, sans-serif;
+        color: #E6E8EC;
+      }
+      #root { position: relative; width: 1920px; height: 1080px; }
+      .clip { position: absolute; inset: 0; }
+      video.clip { object-fit: cover; width: 100%; height: 100%; }
+      .plate {
+        object-fit: contain; width: 100%; height: 100%;
+        background: #0F1115;
+      }
+      .plate-frame {
+        position: absolute; border: 1px solid #2A2E38; overflow: hidden;
+      }
+      .mono {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        text-transform: uppercase; letter-spacing: 0.14em;
+      }
+      .label { font-size: 21px; color: #8B90A0; }
+      .display { font-weight: 700; letter-spacing: -0.03em; line-height: 0.92; text-transform: lowercase; }
+      .purple { color: #836EF9; }
+      .dim { color: #8B90A0; }
+      .rule { border-top: 1px solid #2A2E38; }
+      /* hook */
+      .hook-line { font-size: 118px; }
+      /* stats */
+      .stat { border-left: 1px solid #836EF9; padding-left: 34px; }
+      .stat .v { font-size: 96px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+      .stat .k { font-size: 20px; margin-top: 14px; }
+      /* captions */
+      .caption {
+        position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: 46px; max-width: 1500px; text-align: center;
+        font-size: 34px; font-weight: 600; line-height: 1.35;
+        color: #E6E8EC; text-shadow: 0 2px 18px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.9);
+        padding: 10px 28px;
+      }
+      /* scene labels */
+      .scene-label {
+        position: absolute; top: 44px; left: 64px; display: flex; gap: 18px; align-items: center;
+      }
+      .scene-label .chip {
+        border: 1px solid #836EF9; color: #836EF9; padding: 6px 14px; font-size: 19px;
+      }
+      .scene-label .name { font-size: 19px; color: #8B90A0; }
+      /* close */
+      .contract-card {
+        border: 1px solid #2A2E38; padding: 44px; width: 720px;
+        background: #0F1115;
+      }
+      .contract-card.gated { border-color: #836EF9; }
+      .addr { font-size: 22px; color: #8B90A0; word-break: break-all; }
+      .endcard-line { font-size: 64px; font-weight: 700; letter-spacing: -0.02em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="93.6" data-width="1920" data-height="1080">
+
+      <!-- ============ SCENE 1 · HOOK (0 – 14.57) ============ -->
+      <div class="clip" data-start="0" data-duration="14.57" data-track-index="1" style="background:#0F1115;">
+        <div class="mono label" style="position:absolute;top:44px;left:64px;">SEKATS × MONAD METROPOLIS</div>
+        <div style="position:absolute;left:64px;top:200px;">
+          <div class="display hook-line" id="h1">this agent signs transactions</div>
+          <div class="display hook-line" id="h2">and spends real <span class="purple">MON</span></div>
+          <div class="display hook-line dim" id="h3">completely unsupervised.</div>
+        </div>
+        <div style="position:absolute;left:64px;bottom:180px;">
+          <div class="display" id="h4" style="font-size:150px;color:#836EF9;">who adjudicates?</div>
+        </div>
+      </div>
+
+      <!-- ============ SCENE 2 · EVIDENCE (14.57 – 31.85) ============ -->
+      <video id="vid-evidence" class="clip plate" data-start="14.57" data-duration="17.28" data-media-start="0.4" data-track-index="0"
+             src="footage/A-quality.webm" muted style="object-fit:cover;opacity:0.55;"></video>
+      <div class="clip" data-start="14.57" data-duration="17.28" data-track-index="1"
+           style="background:linear-gradient(90deg,#0F1115 0%,rgba(15,17,21,0.92) 40%,rgba(15,17,21,0.35) 100%);">
+        <div class="scene-label"><span class="mono chip">LIVE CONSOLE</span><span class="mono name">quality surface · fixture mode</span></div>
+        <div style="position:absolute;left:64px;top:180px;display:flex;flex-direction:column;gap:56px;">
+          <div class="stat" id="s1"><div class="v">6,243</div><div class="k mono label">shadow-llm policy reviews</div></div>
+          <div class="stat" id="s2"><div class="v">84.3%</div><div class="k mono label">agent / reviewer agreement</div></div>
+          <div class="stat" id="s3"><div class="v purple">6</div><div class="k mono label">policy edits ever promoted — 0.1%</div></div>
+        </div>
+        <div class="display" id="s4" style="position:absolute;right:64px;bottom:190px;width:640px;font-size:58px;text-align:right;">
+          good ideas generated.<br><span class="purple">never shipped.</span>
+        </div>
+      </div>
+
+      <!-- ============ SCENE 3 · THE LOOP (31.85 – 51.90) ============ -->
+      <!-- 3a: three rejections -->
+      <video id="vid-reject" class="clip plate" data-start="31.85" data-duration="7.2" data-media-start="2.5" data-track-index="0"
+             src="footage/BC-loop.webm" muted></video>
+      <div class="clip" data-start="31.85" data-duration="7.2" data-track-index="1" style="pointer-events:none;">
+        <div class="scene-label"><span class="mono chip">REVIEW QUEUE</span><span class="mono name">reject the same disagreement — 3×</span></div>
+      </div>
+      <!-- 3b: draft + consent dialog -->
+      <video id="vid-draft" class="clip plate" data-start="39.05" data-duration="8.4" data-media-start="24" data-track-index="0"
+             src="footage/BC-loop.webm" muted></video>
+      <div class="clip" data-start="39.05" data-duration="8.4" data-track-index="1" style="pointer-events:none;">
+        <div class="scene-label"><span class="mono chip">AUTO-DRAFT</span><span class="mono name">policy edit staged · human reviews exact bytes</span></div>
+      </div>
+      <!-- 3c: anchored -->
+      <video id="vid-anchored" class="clip plate" data-start="47.45" data-duration="4.45" data-media-start="60" data-track-index="0"
+             src="footage/BC-loop.webm" muted></video>
+      <div class="clip" data-start="47.45" data-duration="4.45" data-track-index="1" style="pointer-events:none;">
+        <div class="scene-label"><span class="mono chip">ANCHORED</span><span class="mono name">eip-712 signature → monad mainnet</span></div>
+      </div>
+
+      <!-- ============ SCENE 4 · JURY (51.90 – 68.77) ============ -->
+      <video id="vid-jury1" class="clip plate" data-start="51.90" data-duration="7.5" data-media-start="3" data-track-index="0"
+             src="footage/D-jury.webm" muted></video>
+      <div class="clip" data-start="51.90" data-duration="7.5" data-track-index="1" style="pointer-events:none;">
+        <div class="scene-label"><span class="mono chip">PERMISSIONLESS JURY</span><span class="mono name">your wallet writes the verdict — no relay</span></div>
+      </div>
+      <video id="vid-jury2" class="clip plate" data-start="59.40" data-duration="9.37" data-media-start="122" data-track-index="0"
+             src="footage/D-jury.webm" muted></video>
+      <div class="clip" data-start="59.40" data-duration="9.37" data-track-index="1" style="pointer-events:none;">
+        <div class="scene-label"><span class="mono chip">ON-CHAIN TALLY</span><span class="mono name">verdict recorded · tally read back via eth_call</span></div>
+      </div>
+
+      <!-- ============ SCENE 5 · VERIFY (68.77 – 78.97) ============ -->
+      <video id="vid-verify" class="clip plate" data-start="68.77" data-duration="10.2" data-media-start="4" data-track-index="0"
+             src="footage/E-anchors.webm" muted></video>
+      <div class="clip" data-start="68.77" data-duration="10.2" data-track-index="1" style="pointer-events:none;">
+        <div class="scene-label"><span class="mono chip">VERIFY YOURSELF</span><span class="mono name">browser re-hashes the doc · reads the contract getter</span></div>
+        <div class="display" id="matchcall" style="position:absolute;right:64px;bottom:170px;font-size:110px;color:#6EE7B7;">match.</div>
+      </div>
+
+      <!-- ============ SCENE 6 · CLOSE (78.97 – 93.53) ============ -->
+      <div class="clip" data-start="78.97" data-duration="14.56" data-track-index="1" style="background:#0F1115;">
+        <div class="mono label" style="position:absolute;top:44px;left:64px;">TWO CONTRACTS · ONE BOUNDARY</div>
+        <div style="position:absolute;left:64px;top:150px;display:flex;gap:48px;">
+          <div class="contract-card gated" id="c1">
+            <div class="mono label" style="color:#836EF9;">GATED · GOVERNANCE</div>
+            <div class="display" style="font-size:52px;margin:18px 0 24px;">sekats attestations</div>
+            <div class="mono" style="font-size:20px;color:#E6E8EC;line-height:1.9;">
+              EIP-712 human-signed approvals<br>
+              approver allowlist · policy lineage<br>
+              only authorized humans promote policy
+            </div>
+            <div class="mono addr" style="margin-top:28px;">0x771a99F24E7Cd81d0937edcb797138AAC228FDfE</div>
+          </div>
+          <div class="contract-card" id="c2">
+            <div class="mono label">PERMISSIONLESS · PUBLIC</div>
+            <div class="display" style="font-size:52px;margin:18px 0 24px;">sekats jury</div>
+            <div class="mono" style="font-size:20px;color:#E6E8EC;line-height:1.9;">
+              any wallet sides with agent or shadow<br>
+              self-custodied verdicts, no relay<br>
+              tallies read straight from the chain
+            </div>
+            <div class="mono addr" style="margin-top:28px;">0x0A8753aEE7684f8fB7773EfDD104B61C92fC9A14</div>
+          </div>
+        </div>
+        <div style="position:absolute;left:64px;bottom:120px;" id="endcard">
+          <div class="endcard-line">console.sekats.thisyearnofear.com</div>
+          <div class="mono label" style="margin-top:14px;">a human accountability layer for autonomous agents · live on monad mainnet · github.com/sneldao/sekats</div>
+        </div>
+      </div>
+
+      <!-- ============ VO ============ -->
+      <audio id="vo" src="audio_vo.mp3" data-start="0"></audio>
+
+      <!-- ============ CAPTIONS ============ -->
+      <div class="caption" data-start="0" data-duration="7.4">This poker agent signs transactions and spends real money on Monad — completely unsupervised.</div>
+      <div class="caption" data-start="7.43" data-duration="5.04">Its own shadow reviewer disagrees with it fifteen percent of the time.</div>
+      <div class="caption" data-start="12.47" data-duration="2.10">So who adjudicates?</div>
+      <div class="caption" data-start="14.57" data-duration="3.48">Sekats is a quality layer for autonomous agents.</div>
+      <div class="caption" data-start="18.05" data-duration="2.38">Six thousand shadow reviews.</div>
+      <div class="caption" data-start="20.43" data-duration="2.06">Eighty-four percent agreement.</div>
+      <div class="caption" data-start="22.49" data-duration="6.15">And only six policy changes ever promoted — the advisory loop was broken.</div>
+      <div class="caption" data-start="28.64" data-duration="3.21">Good ideas generated, never shipped.</div>
+      <div class="caption" data-start="31.85" data-duration="6.32">Reject the same disagreement three times and the console auto-drafts a policy edit.</div>
+      <div class="caption" data-start="38.17" data-duration="8.92">A human reviews the canonical document — the exact bytes — then signs an EIP-712 approval from their own wallet.</div>
+      <div class="caption" data-start="47.09" data-duration="2.52">The signature anchors on Monad.</div>
+      <div class="caption" data-start="49.61" data-duration="1.33">Not the server.</div>
+      <div class="caption" data-start="50.94" data-duration="0.96">The human.</div>
+      <div class="caption" data-start="51.90" data-duration="2.54">And anyone can join the jury.</div>
+      <div class="caption" data-start="54.44" data-duration="7.54">Pick a side — agent, or shadow — and your wallet writes the verdict straight to a permissionless contract.</div>
+      <div class="caption" data-start="61.98" data-duration="2.73">No relay, no custody.</div>
+      <div class="caption" data-start="64.71" data-duration="4.06">The tally is read back from the chain itself.</div>
+      <div class="caption" data-start="68.77" data-duration="6.98">Then check our work: your browser re-hashes the document and reads the contract getter directly.</div>
+      <div class="caption" data-start="75.75" data-duration="1.11">Match.</div>
+      <div class="caption" data-start="76.86" data-duration="2.11">You never trusted our server.</div>
+      <div class="caption" data-start="78.97" data-duration="7.4">Two contracts, one boundary: anyone may observe; only authorized humans govern.</div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // Scene 1 — hook type
+      tl.fromTo("#h1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 0.4)
+        .fromTo("#h2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 1.6)
+        .fromTo("#h3", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 3.0)
+        .fromTo("#h4", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" }, 12.3);
+      // Scene 2 — stats
+      tl.fromTo("#s1", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 17.9)
+        .fromTo("#s2", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 20.3)
+        .fromTo("#s3", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 22.4)
+        .fromTo("#s4", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 28.5);
+      // Scene 5 — match callout
+      tl.fromTo("#matchcall", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 75.6);
+      // Scene 6 — close
+      tl.fromTo("#c1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 79.4)
+        .fromTo("#c2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 80.2)
+        .fromTo("#endcard", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 86.4);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

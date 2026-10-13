@@ -225,8 +225,9 @@ func FromEnv() (Anchorer, error) {
 		return nil, nil
 	}
 	key := os.Getenv("SEKATS_ATTEST_KEY")
+	keystore := os.Getenv("SEKATS_KEYSTORE")
 	contract := os.Getenv("SEKATS_ATTEST_CONTRACT")
-	if key == "" || contract == "" {
+	if contract == "" || (key == "" && keystore == "") {
 		return nil, nil
 	}
 	bin := envOr("CAST_BIN", "cast")
@@ -257,6 +258,8 @@ func FromEnv() (Anchorer, error) {
 		RPC:          envOr("SEKATS_RPC", "https://rpc.monad.xyz"),
 		ContractAddr: contract,
 		Key:          key,
+		Keystore:     keystore,
+		KeystorePass: os.Getenv("SEKATS_KEYSTORE_PASS_FILE"),
 		Bin:          bin,
 		Chain:        fmt.Sprintf("Monad (chain %d)", chain),
 		Explorer:     envOr("SEKATS_EXPLORER", "https://monadscan.com"),
@@ -283,7 +286,9 @@ func (l legacyAnch) ExplorerTX(tx string) string { return l.c.ExplorerTX(tx) }
 type CastAnch struct {
 	RPC          string
 	ContractAddr string
-	Key          string
+	Key          string // raw hex, passed as ETH_PRIVATE_KEY env (cast <1.5)
+	Keystore     string // encrypted keystore path (cast >=1.5 dropped ETH_PRIVATE_KEY)
+	KeystorePass string // keystore password file path
 	Bin          string
 	Chain        string
 	Explorer     string
@@ -315,9 +320,14 @@ func (c *CastAnch) Anchor(ctx context.Context, draftKey, docHash [32]byte) (stri
 
 func (c *CastAnch) send(ctx context.Context, method string, params ...string) (castReceipt, error) {
 	args := append([]string{"send", c.ContractAddr, method}, params...)
+	if c.Keystore != "" {
+		args = append(args, "--keystore", c.Keystore, "--password-file", c.KeystorePass)
+	}
 	args = append(args, "--rpc-url", c.RPC, "--chain", strconv.FormatUint(c.Config.ChainID, 10), "--json")
 	cmd := exec.CommandContext(ctx, c.Bin, args...)
-	cmd.Env = append(os.Environ(), "ETH_PRIVATE_KEY="+c.Key)
+	if c.Keystore == "" {
+		cmd.Env = append(os.Environ(), "ETH_PRIVATE_KEY="+c.Key)
+	}
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
