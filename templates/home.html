@@ -2,6 +2,13 @@
 <h1>Quality Surface</h1>
 <p class="subtitle">{{.Agent}} · {{if .Source.Synthetic}}Synthetic decisions for an offline pipeline demonstration.{{else}}Live signal from the agent's own decision log — not a mock.{{end}}</p>
 
+<section class="judge-strip" data-testid="judge-strip">
+  <strong>Try it on Monad:</strong>
+  <span>1 · <a href="/review">Side with a verdict</a> — your wallet writes to chain</span>
+  <span>2 · <a href="/promotions">Watch rejections draft policy</a> — nothing auto-applies</span>
+  <span>3 · <a href="/anchors">Verify an anchor yourself</a> — your browser checks the contract, not us</span>
+</section>
+
 <div class="source-badge" data-testid="source-badge">
   {{if eq .Source.Kind "live"}}
   <span class="src-pill src-live" data-testid="source-live">LIVE</span>

@@ -5,6 +5,7 @@
   --text: #e6e8ec;
   --muted: #8b90a0;
   --accent: #6ee7b7;
+  --monad: #836ef9;
   --danger: #f87171;
   --warn: #fbbf24;
 }
@@ -143,6 +144,22 @@ h1 { margin-bottom: 4px; }
 .btn-accept:hover { border-color: var(--accent); color: var(--accent); }
 .btn-reject:hover { border-color: var(--danger); color: var(--danger); }
 
+/* Monad brand accent for chain-touching surfaces */
+.judge-strip {
+  border: 1px solid var(--monad);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.judge-strip strong { color: var(--monad); }
+.judge-strip a { color: var(--text); }
+.judge-strip a:hover { color: var(--monad); }
+
 /* Permissionless jury verdicts (SekatsJury) */
 .jury-row {
   display: flex;
@@ -153,12 +170,16 @@ h1 { margin-bottom: 4px; }
   border-top: 1px dashed var(--border);
   font-size: 12px;
 }
-.jury-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; }
+.jury-label { color: var(--monad); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; }
 .btn-jury { padding: 4px 10px; font-size: 12px; }
-.btn-jury:hover { border-color: var(--accent); color: var(--accent); }
+.btn-jury:hover { border-color: var(--monad); color: var(--monad); }
+.btn-jury.juror-voted { border-color: var(--monad); color: var(--monad); background: rgba(131, 110, 249, 0.12); }
 .jury-tally { color: var(--muted); font-family: monospace; }
 .jury-status { color: var(--muted); }
-.jury-status a { color: var(--accent); }
+.jury-status a { color: var(--monad); }
+.jury-you { color: var(--monad); font-size: 11px; }
+.jury-box { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+.jury-box strong { color: var(--monad); }
 
 /* Data-source badge (Quality Surface) */
 .source-badge {

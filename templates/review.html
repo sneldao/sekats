@@ -6,6 +6,7 @@
   {{template "review-counts-inner" .}}
 </section>
 
+{{if .Jury.On}}<div class="jury-box" id="jury-box">reading the jury box…</div>{{end}}
 <div id="review-list" data-testid="review-list"{{if .Jury.On}}
   data-jury-contract="{{.Jury.Contract}}" data-jury-rpc="{{.Jury.RPC}}"
   data-jury-chain="{{.Jury.ChainID}}" data-jury-explorer="{{.Jury.Explorer}}"{{end}}>
