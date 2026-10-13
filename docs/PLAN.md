@@ -210,4 +210,18 @@ chain where the agent risks real MON.
 Verified locally in fixture mode with no signer: draft auto-stages on
 3 rejections, approve renders the honest "not configured" state, and the
 attestation doc is byte-identical across requests (header digest ==
-`shasum -a 256`). On-chain end-to-end pending deploy of the contract.
+`shasum -a 256`).
+
+On-chain, verified end-to-end on Monad mainnet (2026-10-13):
+
+- `SekatsAttestations` deployed at `0x06bce5d59bf854d6e2900d71af3093270dc2c3bf`
+  (attester `0xE18EA17E7bEdf603a482013F59608446e95bB56c`, a dedicated
+  low-balance key — the agent wallet key is never near this repo).
+- Approving the `flop-bet-to-check` draft anchored tx
+  `0x3299f04af7c6d14a5ed4bef828498108b9ee4422cd56dc747d3652bc6337c072`
+  in ~3s; the card shows the ANCHORED badge with a monadscan link, the
+  counts tile and Quality Surface counter tick to 1.
+- Independent read-back: `cast call … anchored(draftKey)` returns the
+  served doc's sha256 — and the Anchor call itself enforces this
+  read-back, so a mined-but-wrong anchor records `failed`, not a
+  phantom success.

@@ -29,10 +29,9 @@ echo "Balance : $(cast balance "$(cast wallet address --private-key "$SEKATS_ATT
 echo "Deploying to $RPC …"
 
 OUT=$(mktemp)
-cast send --create "0x$(cat "$BIN")" \
-  --rpc-url "$RPC" \
-  --private-key "$SEKATS_ATTEST_KEY" \
-  --json > "$OUT"
+# cast 1.5+: --create is a subcommand taking only CODE — tx options go first.
+cast send --rpc-url "$RPC" --private-key "$SEKATS_ATTEST_KEY" --json \
+  --create "0x$(cat "$BIN")" > "$OUT"
 
 ADDR=$(python3 -c "import json; print(json.load(open('$OUT'))['contractAddress'])")
 STATUS=$(python3 -c "import json; print(json.load(open('$OUT'))['status'])")

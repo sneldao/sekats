@@ -153,6 +153,13 @@ SEKATS_ATTEST_CONTRACT=0x… \
 ./bin/server
 ```
 
+Live deployment on Monad mainnet (2026-10-13): contract
+[`0x06bce5d59bf854d6e2900d71af3093270dc2c3bf`](https://monadscan.com/address/0x06bce5d59bf854d6e2900d71af3093270dc2c3bf);
+first anchor [tx
+`0x3299f04a…`](https://monadscan.com/tx/0x3299f04af7c6d14a5ed4bef828498108b9ee4422cd56dc747d3652bc6337c072).
+Every anchor is verified by read-back: `anchored(draftKey)` must equal
+the doc hash, else the record is `failed`, not anchored.
+
 Env: `SEKATS_RPC` (default `https://rpc.monad.xyz`), `SEKATS_EXPLORER`
 (default `https://monadscan.com`), `SEKATS_ATTEST=off` to force-disable,
 `CAST_BIN` to point at a non-PATH cast. A failed anchor is stored as
