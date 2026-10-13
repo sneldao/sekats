@@ -17,7 +17,9 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -30,6 +32,7 @@ import (
 
 	"github.com/sneldao/sekats/internal/adapters"
 	"github.com/sneldao/sekats/internal/adapters/poker"
+	"github.com/sneldao/sekats/internal/attest"
 	"github.com/sneldao/sekats/internal/engine"
 	"github.com/sneldao/sekats/internal/live"
 	"github.com/sneldao/sekats/internal/policy"
@@ -49,6 +52,9 @@ type app struct {
 	vStore           *verdicts.Store
 	promos           *promotion.Store
 	promoteThreshold int
+	anchorer         attest.Anchorer // nil = on-chain anchoring disabled
+	attests          *attest.Store
+	attestExplorer   string // base URL for tx links, even when signing is off
 }
 
 // dataSource is the current view over the agent's data. In live mode the
@@ -110,9 +116,22 @@ func main() {
 			ad.NewDraft,
 		),
 		promoteThreshold: threshold,
+		attests:          attest.NewStore(filepath.Join(dataDir, "attestations.json")),
+		attestExplorer:   envOr("SEKATS_EXPLORER", "https://monadscan.com"),
 	}
 	if err := a.promos.Load(); err != nil {
 		log.Printf("loading promotion state: %v", err)
+	}
+	if err := a.attests.Load(); err != nil {
+		log.Printf("loading attestations: %v", err)
+	}
+	if anch, err := attest.FromEnv(); err != nil {
+		log.Printf("attestation: %v", err)
+	} else if anch != nil {
+		a.anchorer = anch
+		log.Printf("attestation: anchoring on %s via %s", anch.ChainName(), anch.Contract())
+	} else {
+		log.Printf("attestation: no signer configured — on-chain anchoring disabled")
 	}
 
 	mux := http.NewServeMux()
@@ -278,6 +297,8 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 		Promotions struct {
 			Staged   int
 			Approved int
+			Anchored int
+			AnchorOn bool
 		}
 	}{
 		Surface: surf,
@@ -285,7 +306,9 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 		Promotions: struct {
 			Staged   int
 			Approved int
-		}{Staged: staged, Approved: approved},
+			Anchored int
+			AnchorOn bool
+		}{Staged: staged, Approved: approved, Anchored: a.attests.AnchoredCount(), AnchorOn: a.anchorer != nil},
 	})
 }
 
@@ -446,16 +469,88 @@ func (a *app) handleTrends(w http.ResponseWriter, r *http.Request) {
 
 // draftCard is the render shape for one policy draft on the promotions
 // screen: the draft itself, its pre-rendered patch JSON (shown once
-// approved), and the adapter's target section.
+// approved), the adapter's target section, and the on-chain attestation
+// state for the draft.
 type draftCard struct {
-	Draft  engine.Draft
-	Patch  string
-	Target string
+	Draft        engine.Draft
+	Patch        string
+	Target       string
+	Att          attest.Record
+	AttOK        bool   // an attestation record exists for this draft
+	AnchorOn     bool   // a signer is configured (anchors actually land)
+	AttTxURL     string // explorer link for the anchor tx, "" if none
+	AttTxShort   string
+	AttHashShort string
 }
 
 func (a *app) card(d engine.Draft) draftCard {
 	patch, _ := json.MarshalIndent(d.Patch(), "", "  ")
-	return draftCard{Draft: d, Patch: string(patch), Target: a.adapter.PolicyTarget()}
+	c := draftCard{
+		Draft:    d,
+		Patch:    string(patch),
+		Target:   a.adapter.PolicyTarget(),
+		AnchorOn: a.anchorer != nil,
+	}
+	if rec, ok := a.attests.For(d.ID); ok {
+		c.Att, c.AttOK = rec, true
+		if len(rec.DocSHA256) > 16 {
+			c.AttHashShort = rec.DocSHA256[:16]
+		}
+		if rec.TxHash != "" {
+			c.AttTxShort = rec.TxHash
+			if len(rec.TxHash) > 18 {
+				c.AttTxShort = rec.TxHash[:18] + "…"
+			}
+			c.AttTxURL = strings.TrimRight(a.attestExplorer, "/") + "/tx/" + rec.TxHash
+		}
+	}
+	return c
+}
+
+// anchorDraft writes the approved draft's attestation doc hash on-chain
+// and records the outcome. No-op when no signer is configured — the
+// draft is still approved and the UI says anchoring is off.
+func (a *app) anchorDraft(d engine.Draft) {
+	if a.anchorer == nil || d.Status != engine.DraftApproved {
+		return
+	}
+	if rec, ok := a.attests.For(d.ID); ok && rec.Status == "anchored" {
+		return // first approval already anchored; never re-anchor
+	}
+	doc, err := attest.DocFor(d)
+	if err != nil {
+		log.Printf("attestation doc: %v", err)
+		return
+	}
+	docBytes, err := doc.CanonicalJSON()
+	if err != nil {
+		log.Printf("attestation doc marshal: %v", err)
+		return
+	}
+	rec := attest.Record{
+		DraftID:   d.ID,
+		DocSHA256: fmt.Sprintf("%x", attest.DocHash(docBytes)),
+		Chain:     a.anchorer.ChainName(),
+		Contract:  a.anchorer.Contract(),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	txHash, attester, err := a.anchorer.Anchor(ctx, attest.DraftKey(d.ID), attest.DocHash(docBytes))
+	cancel()
+	if err != nil {
+		rec.Status = "failed"
+		rec.Error = err.Error()
+		log.Printf("attestation anchor %s: %v", d.ID, err)
+	} else {
+		now := time.Now().UTC()
+		rec.Status = "anchored"
+		rec.TxHash = txHash
+		rec.Attester = attester
+		rec.AnchoredAt = &now
+		log.Printf("attestation anchored %s: tx %s on %s", d.ID, txHash, rec.Chain)
+	}
+	if err := a.attests.Put(rec); err != nil {
+		log.Printf("persist attestation: %v", err)
+	}
 }
 
 // handlePromotions renders the /promotions screen: the staged policy
@@ -474,6 +569,8 @@ func (a *app) handlePromotions(w http.ResponseWriter, r *http.Request) {
 		Approved  int
 		Discarded int
 		Threshold int
+		Anchored  int
+		AnchorOn  bool
 		Patterns  []promotion.PatternState
 		Target    string
 		Agent     string
@@ -483,6 +580,8 @@ func (a *app) handlePromotions(w http.ResponseWriter, r *http.Request) {
 		Approved:  approved,
 		Discarded: discarded,
 		Threshold: a.promoteThreshold,
+		Anchored:  a.attests.AnchoredCount(),
+		AnchorOn:  a.anchorer != nil,
 		Patterns:  a.promos.Patterns(),
 		Target:    a.adapter.PolicyTarget(),
 		Agent:     a.adapter.Agent(),
@@ -490,8 +589,11 @@ func (a *app) handlePromotions(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePromotionAction handles POST /promotions/{id}/approve,
-// POST /promotions/{id}/discard (returning the updated draft card for an
-// htmx swap), and GET /promotions/{id}/patch (the applyable JSON artifact).
+// POST /promotions/{id}/discard, POST /promotions/{id}/attest (retry an
+// on-chain anchor) — all returning the updated draft card for an htmx
+// swap — plus GET /promotions/{id}/patch (the applyable JSON artifact)
+// and GET /promotions/{id}/attestation (the byte-stable doc whose
+// SHA-256 is anchored on-chain).
 func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(parts) != 3 || parts[0] != "promotions" {
@@ -500,17 +602,37 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 	}
 	id := parts[1]
 
-	if r.Method == http.MethodGet && parts[2] == "patch" {
+	if r.Method == http.MethodGet {
 		d, ok := a.promos.Draft(id)
 		if !ok || d.Status != engine.DraftApproved {
 			http.NotFound(w, r)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Content-Disposition", `attachment; filename="`+id+`.policy-patch.json"`)
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		enc.Encode(d.Patch())
+		switch parts[2] {
+		case "patch":
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Disposition", `attachment; filename="`+id+`.policy-patch.json"`)
+			enc := json.NewEncoder(w)
+			enc.SetIndent("", "  ")
+			enc.Encode(d.Patch())
+		case "attestation":
+			doc, err := attest.DocFor(d)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusConflict)
+				return
+			}
+			docBytes, err := doc.CanonicalJSON()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Disposition", `attachment; filename="`+id+`.attestation.json"`)
+			w.Header().Set("X-Sekats-Doc-SHA256", fmt.Sprintf("%x", attest.DocHash(docBytes)))
+			w.Write(docBytes)
+		default:
+			http.NotFound(w, r)
+		}
 		return
 	}
 
@@ -525,6 +647,17 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 	switch parts[2] {
 	case "approve":
 		d, err = a.promos.Approve(id)
+		if err == nil {
+			a.anchorDraft(d)
+		}
+	case "attest":
+		var ok bool
+		d, ok = a.promos.Draft(id)
+		if !ok || d.Status != engine.DraftApproved {
+			err = fmt.Errorf("draft %s is not approved", id)
+		} else {
+			a.anchorDraft(d)
+		}
 	case "discard":
 		d, err = a.promos.Discard(id)
 	default:
@@ -547,6 +680,8 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 			Approved  int
 			Discarded int
 			Threshold int
+			Anchored  int
+			AnchorOn  bool
 		}
 	}{
 		Card: a.card(d),
@@ -555,7 +690,9 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 			Approved  int
 			Discarded int
 			Threshold int
-		}{Pending: pending, Approved: approved, Discarded: discarded, Threshold: a.promoteThreshold},
+			Anchored  int
+			AnchorOn  bool
+		}{Pending: pending, Approved: approved, Discarded: discarded, Threshold: a.promoteThreshold, Anchored: a.attests.AnchoredCount(), AnchorOn: a.anchorer != nil},
 	}); err != nil {
 		log.Printf("render promotion-card-response: %v", err)
 	}

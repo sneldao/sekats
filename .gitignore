@@ -15,3 +15,8 @@ data/verdicts.json
 data/pattern_rejections.json
 data/policy_drafts.json
 data/policy-patches/
+data/attestations.json
+
+# Foundry build artifacts for the attestation contract.
+contracts/out/
+contracts/cache/

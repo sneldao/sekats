@@ -57,7 +57,7 @@
   <div class="card" data-testid="promotion-pipeline-card">
     <h3>Promotion Pipeline</h3>
     <p class="big-number">{{.Promotions.Staged}}</p>
-    <p class="muted">policy edits staged for review · {{.Promotions.Approved}} approved for application</p>
+    <p class="muted">policy edits staged for review · {{.Promotions.Approved}} approved for application{{if .Promotions.Anchored}} · <strong data-testid="anchored-count">{{.Promotions.Anchored}} anchored on Monad</strong>{{end}}</p>
     <p class="muted"><a href="/promotions">Review staged edits &rarr;</a></p>
   </div>
 </section>

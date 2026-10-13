@@ -3,4 +3,5 @@
   <div class="card"><h3>Approved (patch ready)</h3><p class="big-number">{{.Approved}}</p></div>
   <div class="card"><h3>Discarded</h3><p class="big-number">{{.Discarded}}</p></div>
   <div class="card"><h3>Threshold</h3><p class="big-number">{{.Threshold}}</p><p class="muted">rejections per pattern before a draft is auto-staged</p></div>
+  <div class="card" data-testid="anchored-card"><h3>Anchored on Monad</h3><p class="big-number">{{.Anchored}}</p><p class="muted">{{if .AnchorOn}}approvals write a SHA-256 doc hash on-chain{{else}}no signer configured — approvals are not anchored{{end}}</p></div>
 {{end}}

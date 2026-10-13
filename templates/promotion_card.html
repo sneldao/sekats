@@ -41,7 +41,32 @@
     <p class="muted">Patch ready — download it, then apply on the agent host:</p>
     <pre class="patch-pre" data-testid="draft-patch-json">{{.Patch}}</pre>
     <p class="muted"><code>python3 tools/apply_policy_draft.py {{.Draft.ID}}.policy-patch.json /path/to/poker-policy.json</code></p>
-    <p><a class="btn btn-export" href="/promotions/{{.Draft.ID}}/patch" data-testid="patch-download">Download patch JSON</a></p>
+    <p><a class="btn btn-export" href="/promotions/{{.Draft.ID}}/patch" data-testid="patch-download">Download patch JSON</a>
+       <a class="btn" href="/promotions/{{.Draft.ID}}/attestation" data-testid="attestation-doc">Attestation doc</a></p>
+  </div>
+  <div class="attest-block" data-testid="attest-block">
+    {{if .AttOK}}
+      {{if eq .Att.Status "anchored"}}
+    <p data-testid="attest-anchored">
+      <span class="attest-badge attest-ok">ANCHORED</span>
+      on <strong>{{.Att.Chain}}</strong>{{if .AttTxURL}} — tx
+      <a href="{{.AttTxURL}}" target="_blank" rel="noopener" data-testid="attest-tx">{{.AttTxShort}}</a>{{end}}
+      by <code>{{.Att.Attester}}</code>{{if .Att.AnchoredAt}} at {{.Att.AnchoredAt.Format "2006-01-02 15:04 UTC"}}{{end}}.
+      Doc <code>sha256:{{.AttHashShort}}…</code> — re-hash the attestation doc to verify.
+    </p>
+      {{else}}
+    <p data-testid="attest-failed">
+      <span class="attest-badge attest-bad">ANCHOR FAILED</span>
+      {{.Att.Error}}
+      <button hx-post="/promotions/{{.Draft.ID}}/attest" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="attest-retry" class="btn">Retry anchor</button>
+    </p>
+      {{end}}
+    {{else if .AnchorOn}}
+    <p class="muted" data-testid="attest-pending">Anchor not recorded yet.
+      <button hx-post="/promotions/{{.Draft.ID}}/attest" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="attest-retry" class="btn">Anchor on-chain</button></p>
+    {{else}}
+    <p class="muted" data-testid="attest-off">On-chain anchoring not configured — set <code>SEKATS_ATTEST_KEY</code> + <code>SEKATS_ATTEST_CONTRACT</code> to anchor approvals on Monad.</p>
+    {{end}}
   </div>
   {{else if eq .Draft.Status "discarded"}}
   <p class="muted" data-testid="draft-discarded-note">Discarded — no policy change will be made for this pattern. If the pattern keeps recurring, a new draft will be staged.</p>

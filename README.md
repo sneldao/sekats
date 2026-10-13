@@ -40,7 +40,11 @@ framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
    into `postflop.promotedFromHandReviews` (the same section the agent's
    existing promotions live in), with the rejected hands as evidence. A
    human approves (→ downloadable `.policy-patch.json`) or discards.
-   Nothing is ever applied automatically.
+   Nothing is ever applied automatically. Approvals can additionally be
+   **anchored on Monad**: the canonical attestation doc's SHA-256 is
+   written to the `SekatsAttestations` contract, so the same chain where
+   the agent risks real money also carries the immutable record of which
+   policy changes a human signed off on.
 5. **Trends** (`/trends`) — the shadow-LLM suggestion timeline (real
    timestamps from the fixture) and the disagreement pattern matrix
    (bet→check dominates). No fabricated agreement-over-time chart: the
@@ -98,11 +102,14 @@ needed. Other env vars:
 - `SEKATS_ADAPTER` — domain adapter, default `poker`.
 - `SEKATS_PROMOTE_THRESHOLD` — rejections per pattern before a policy edit
   is auto-drafted, default `3`.
+- `SEKATS_ATTEST` — `off` disables on-chain anchoring (default: auto,
+  enabled when `SEKATS_ATTEST_KEY` + `SEKATS_ATTEST_CONTRACT` are set).
+- `SEKATS_RPC` / `SEKATS_EXPLORER` / `CAST_BIN` — anchoring config.
 - `SEKATS_DB_HOST` / `SEKATS_DB_REMOTE` — used by `tools/sync_live.sh`.
 
 Local state (`data/verdicts.json`, `data/pattern_rejections.json`,
-`data/policy_drafts.json`) is git-ignored; deleting it resets the console
-to a clean slate.
+`data/policy_drafts.json`, `data/attestations.json`) is git-ignored;
+deleting it resets the console to a clean slate.
 
 ## Applying an approved patch
 
@@ -117,6 +124,41 @@ python3 tools/apply_policy_draft.py flop-bet-to-check.policy-patch.json \
 
 The script appends the entry to the target array, is idempotent (a second
 run is a no-op), and refuses unknown schemas.
+
+## On-chain attestation (Monad)
+
+Approving a draft can anchor it on Monad mainnet (chain 143): the console
+builds a canonical attestation document (`sekats-attestation/v1` — draft
+id, pattern, target, entry, evidence decision ids, approval timestamp),
+serves it byte-stable at `/promotions/{id}/attestation`, and writes its
+SHA-256 into the `SekatsAttestations` contract
+(`contracts/SekatsAttestations.sol`) under the key
+`sha256("sekats/draft/" + draftID)`. Anyone can verify an anchor: hash
+the downloaded doc and compare with `anchored(draftKey)` on the contract.
+One anchor per draft — the first human approval is the one that counts.
+
+Signing is delegated to `cast send` (Foundry); the private key exists
+only in the operator's environment, never in the repo or the data files.
+Without a signer the feature degrades honestly — approvals work, the UI
+says anchoring is off, and `data/attestations.json` records nothing.
+
+Setup (operator only, not the public parlor):
+
+```
+# dedicated low-balance attester key — NOT the agent wallet key
+SEKATS_ATTEST_KEY=0x… tools/deploy_attestations.sh   # prints contract addr
+
+SEKATS_ATTEST_KEY=0x… \
+SEKATS_ATTEST_CONTRACT=0x… \
+./bin/server
+```
+
+Env: `SEKATS_RPC` (default `https://rpc.monad.xyz`), `SEKATS_EXPLORER`
+(default `https://monadscan.com`), `SEKATS_ATTEST=off` to force-disable,
+`CAST_BIN` to point at a non-PATH cast. A failed anchor is stored as
+`failed` with the error and can be retried with the card's "Retry anchor"
+button (`POST /promotions/{id}/attest`). Fund the attester key with a
+little MON — one anchor costs a fraction of a cent of gas.
 
 ## Kane CLI verification
 

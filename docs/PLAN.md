@@ -180,3 +180,34 @@ bridge against a real temp SQLite DB, promotion, policy, verdicts),
 Kane flows added/updated (`live_bridge_test.md`, `promotions_test.md`,
 and `review_queue_test.md` now targets a pending item specifically so the
 suite stays re-runnable against persisted state).
+
+## Progress log — on-chain attestation, Monad (2026-10-13)
+
+Added for the Monad Metropolis hackathon window: human approvals now
+anchor on Monad mainnet (chain 143), closing the audit trail on the same
+chain where the agent risks real MON.
+
+- `internal/attest` — canonical `sekats-attestation/v1` doc (byte-stable:
+  fixed-at-approval fields only, sorted map keys), SHA-256 digest, record
+  store (`data/attestations.json`, git-ignored), and a `cast send`
+  anchorer selected by env (`SEKATS_ATTEST_KEY` + `SEKATS_ATTEST_CONTRACT`
+  → enabled; `SEKATS_ATTEST=off` or missing config → honestly disabled).
+  Key material lives only in the operator's env — never in the repo, the
+  data files, or on the public parlor.
+- `contracts/SekatsAttestations.sol` — append-only
+  `anchor(bytes32 draftKey, bytes32 docHash)` registry
+  (`draftKey = sha256("sekats/draft/" + draftID)`); one anchor per draft,
+  re-anchoring reverts. Committed creation bytecode
+  (`contracts/SekatsAttestations.bin`, solc 0.8.26 --optimize) so deploy
+  needs only `cast`: `tools/deploy_attestations.sh`.
+- Routes: `GET /promotions/{id}/attestation` serves the doc with an
+  `X-Sekats-Doc-SHA256` header for offline verification;
+  `POST /promotions/{id}/attest` retries a failed anchor.
+- UI: anchored/failed/off state on each approved draft card (tx link to
+  monadscan, truncated doc hash), an "Anchored on Monad" tile in the
+  pipeline counts, and an anchored counter on the Quality Surface.
+
+Verified locally in fixture mode with no signer: draft auto-stages on
+3 rejections, approve renders the honest "not configured" state, and the
+attestation doc is byte-identical across requests (header digest ==
+`shasum -a 256`). On-chain end-to-end pending deploy of the contract.
