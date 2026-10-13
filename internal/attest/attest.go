@@ -253,7 +253,30 @@ func (c *CastAnch) Anchor(ctx context.Context, draftKey, docHash [32]byte) (stri
 	if rc.Status != "0x1" {
 		return rc.TransactionHash, rc.From, fmt.Errorf("tx %s reverted", rc.TransactionHash)
 	}
+
+	// Read back anchored(draftKey) and compare. A mined tx is not proof:
+	// the contract address could be wrong, empty, or on another chain —
+	// the whole point of the feature is verification, so verify.
+	if err := c.verifyOnChain(ctx, draftKey, docHash); err != nil {
+		return rc.TransactionHash, rc.From, fmt.Errorf("tx %s mined but read-back failed: %v", rc.TransactionHash, err)
+	}
 	return rc.TransactionHash, rc.From, nil
+}
+
+// verifyOnChain calls anchored(draftKey) and requires it to equal docHash.
+func (c *CastAnch) verifyOnChain(ctx context.Context, draftKey, docHash [32]byte) error {
+	out, err := exec.CommandContext(ctx, c.Bin, "call", c.ContractAddr,
+		"anchored(bytes32)(bytes32)",
+		"0x"+hex.EncodeToString(draftKey[:]),
+		"--rpc-url", c.RPC).Output()
+	if err != nil {
+		return err
+	}
+	want := "0x" + hex.EncodeToString(docHash[:])
+	if strings.TrimSpace(string(out)) != want {
+		return fmt.Errorf("anchored() returned %.66s, want %s", string(out), want)
+	}
+	return nil
 }
 
 func envOr(key, fallback string) string {
