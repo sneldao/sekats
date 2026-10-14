@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -59,7 +58,7 @@ func pipelineApp(t *testing.T, dir string, ad adapters.Adapter) *app {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmpl, err := template.ParseGlob("../../templates/*.html")
+	tmpl, err := parseTemplates("../../templates/*.html")
 	if err != nil {
 		t.Fatal(err)
 	}

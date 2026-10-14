@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -262,7 +261,7 @@ func TestPersistenceFailureStopsRelay(t *testing.T) {
 func TestWalletApprovalTemplates(t *testing.T) {
 	a, _ := testApprovalApp(t)
 	a.adapter = poker.New()
-	tmpl, err := template.ParseGlob("../../templates/*.html")
+	tmpl, err := parseTemplates("../../templates/*.html")
 	if err != nil {
 		t.Fatal(err)
 	}

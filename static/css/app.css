@@ -141,7 +141,8 @@ h1 { margin-bottom: 4px; }
   cursor: pointer;
   font-size: 13px;
 }
-.btn-accept:hover { border-color: var(--accent); color: var(--accent); }
+.btn-accept { border-color: var(--accent); color: var(--accent); }
+.btn-accept:hover { background: var(--accent); color: var(--bg); }
 .btn-reject:hover { border-color: var(--danger); color: var(--danger); }
 
 /* Monad brand accent for chain-touching surfaces */
@@ -265,3 +266,63 @@ h1 { margin-bottom: 4px; }
 .verify-match { background: rgba(110, 231, 183, 0.15); color: var(--accent); }
 .verify-mismatch { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
 .verify-not-found, .verify-unavailable { background: var(--border); color: var(--muted); }
+
+/* Poker-native surfaces: hand codes render as card faces, streets as felt
+   pips, pots as chips — the domain is the design language. */
+.hand { display: inline-flex; gap: 5px; }
+.mcard {
+  position: relative;
+  width: 38px; height: 52px;
+  border-radius: 6px;
+  background: #f4f5f7;
+  color: #10131a;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.mcard b { position: absolute; top: 4px; left: 6px; font-size: 15px; line-height: 1; }
+.mcard i {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-style: normal; font-size: 24px; padding-top: 8px;
+}
+.mcard.red { color: #c0392b; }
+
+.street {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.street-preflop { color: var(--muted); }
+.street-flop { color: var(--accent); border-color: rgba(110, 231, 183, 0.45); }
+.street-turn { color: var(--monad); border-color: rgba(131, 110, 249, 0.55); }
+.street-river { color: #7dd3fc; border-color: rgba(125, 211, 252, 0.45); }
+
+.pot {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+}
+.pot::before {
+  content: "";
+  width: 14px; height: 14px; flex: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #9b86ff, var(--monad) 60%, #5c45d8);
+  border: 2px dashed #e6e8ec;
+}
+
+.review-item.verdict-pending .verdict-badge { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+.review-item.verdict-accepted .verdict-badge { background: rgba(110, 231, 183, 0.15); color: var(--accent); }
+.review-item.verdict-rejected .verdict-badge { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+
+.btn-jury[data-jury-vote="1"] { border-color: var(--accent); color: var(--accent); }
+.btn-jury[data-jury-vote="1"]:hover { background: rgba(110, 231, 183, 0.12); }
+.btn-jury[data-jury-vote="2"] { border-color: var(--danger); color: var(--danger); }
+.btn-jury[data-jury-vote="2"]:hover { background: rgba(248, 113, 113, 0.12); }
+
+.count-card { border-top: 3px solid var(--border); }
+.count-pending { border-top-color: var(--warn); }
+.count-accepted { border-top-color: var(--accent); }
+.count-rejected { border-top-color: var(--danger); }

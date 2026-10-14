@@ -101,7 +101,7 @@ func main() {
 		log.Fatalf("failed to load data: %v", err)
 	}
 
-	tmpl, err := template.ParseGlob(filepath.Join(tmplDir, "*.html"))
+	tmpl, err := parseTemplates(filepath.Join(tmplDir, "*.html"))
 	if err != nil {
 		log.Fatalf("failed to parse templates: %v", err)
 	}
@@ -959,4 +959,41 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// parseTemplates loads the template set with the shared FuncMap; tests use the
+// same entry point so rendering paths never drift.
+func parseTemplates(glob string) (*template.Template, error) {
+	return template.New("sekats").Funcs(template.FuncMap{
+		"cards": cardTiles,
+		"lower": strings.ToLower,
+	}).ParseGlob(glob)
+}
+
+var cardRanks = map[byte]bool{
+	'A': true, 'K': true, 'Q': true, 'J': true, 'T': true,
+	'9': true, '8': true, '7': true, '6': true, '5': true,
+	'4': true, '3': true, '2': true,
+}
+
+// cardTiles renders a poker hand code like "KTo" or "K5s" as two mini card
+// faces. Suits are not stored in the data, so they are assigned
+// deterministically: suited codes share spades; offsuit codes and pairs get a
+// black/red split. Non-poker context codes fall back to plain text.
+func cardTiles(code string) template.HTML {
+	c := strings.ToUpper(strings.TrimSpace(code))
+	if len(c) < 2 || !cardRanks[c[0]] || !cardRanks[c[1]] {
+		return template.HTML(`<span class="hand-code">` + template.HTMLEscapeString(code) + `</span>`)
+	}
+	s2 := "♥"
+	if len(c) >= 3 && c[2] == 'S' {
+		s2 = "♠"
+	}
+	red := ""
+	if s2 == "♥" || s2 == "♦" {
+		red = " red"
+	}
+	return template.HTML(fmt.Sprintf(
+		`<span class="hand"><span class="mcard"><b>%c</b><i>♠</i></span><span class="mcard%s"><b>%c</b><i>%s</i></span></span>`,
+		c[0], red, c[1], s2))
 }

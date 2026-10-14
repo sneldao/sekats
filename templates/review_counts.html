@@ -1,5 +1,5 @@
 {{define "review-counts-inner"}}
-  <div class="card"><h3>Pending</h3><p class="big-number">{{.Pending}}</p></div>
-  <div class="card"><h3>Accepted (agent right)</h3><p class="big-number">{{.Accepted}}</p></div>
-  <div class="card"><h3>Rejected (LLM right)</h3><p class="big-number">{{.Rejected}}</p></div>
+  <div class="card count-card count-pending"><h3>Pending</h3><p class="big-number">{{.Pending}}</p></div>
+  <div class="card count-card count-accepted"><h3>Accepted (agent right)</h3><p class="big-number">{{.Accepted}}</p></div>
+  <div class="card count-card count-rejected"><h3>Rejected (LLM right)</h3><p class="big-number">{{.Rejected}}</p></div>
 {{end}}

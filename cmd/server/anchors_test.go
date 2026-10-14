@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -23,7 +22,7 @@ const contractAddress = "0x1234567890123456789012345678901234567890"
 
 func registryApp(t *testing.T) *app {
 	t.Helper()
-	tmpl, err := template.ParseGlob(filepath.Join("..", "..", "templates", "*.html"))
+	tmpl, err := parseTemplates(filepath.Join("..", "..", "templates", "*.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
