@@ -1,40 +1,32 @@
-# Sekats — Monad Metropolis demo narration
+# Sekats — Metropolis demo narration v2
 
-Voice: measured, precise, confident — an engineer explaining something that
-matters. No hype words. Roughly 90 seconds at a deliberate pace.
+Voice: ElevenLabs `onwK4e9ZLuTAKqWW03F9y` (Daniel — steady broadcaster).
+Target: ~155 words ≈ 65–80 s with pauses.
 
-## 1 — HOOK (0:00–0:09)
+## Copy
 
-This poker agent signs transactions and spends real money on Monad —
-completely unsupervised. Its own shadow reviewer disagrees with it fifteen
-percent of the time. So who adjudicates?
+We built an agent that plays poker for real money.
 
-## 2 — EVIDENCE (0:09–0:24)
+It's been playing the arena for months — signing transactions on Monad,
+completely unsupervised.
 
-Sekats is a quality layer for autonomous agents. Six thousand shadow reviews.
-Eighty-four percent agreement. And only six policy changes ever promoted —
-the advisory loop was broken. Good ideas generated, never shipped.
+So we pointed a shadow reviewer at every decision it made.
+Six thousand reviews later: it disagrees fifteen percent of the time.
 
-## 3 — THE LOOP (0:24–0:47)
+Who adjudicates? That question became Sekats.
 
-Reject the same disagreement three times and the console auto-drafts a policy
-edit. A human reviews the canonical document — the exact bytes — then signs
-an EIP-712 approval from their own wallet. The signature anchors on Monad.
-Not the server. The human.
+Reject the same disagreement three times — and the console drafts the
+policy edit itself.
 
-## 4 — JURY (0:47–1:05)
+A human reviews the exact bytes, then signs. One E I P seven twelve
+signature anchors it on Monad. Not our server — the human.
 
-And anyone can join the jury. Pick a side — agent, or shadow — and your
-wallet writes the verdict straight to a permissionless contract. No relay,
-no custody. The tally is read back from the chain itself.
+And anyone can sit the jury. Your wallet writes the verdict straight to a
+permissionless contract. No relay, no custody.
 
-## 5 — VERIFY (1:05–1:18)
+Then check our work — your browser re-hashes the document and reads the
+contract directly. Match. You never had to trust us.
 
-Then check our work: your browser re-hashes the document and reads the
-contract getter directly. Match. You never trusted our server.
+Agents are moving real money now. Someone has to hold them accountable.
 
-## 6 — CLOSE (1:18–1:30)
-
-Two contracts, one boundary: anyone may observe; only authorized humans
-govern. Sekats — a human accountability layer for autonomous agents, live on
-Monad mainnet.
+Sekats. Stakes — spelled backwards.
