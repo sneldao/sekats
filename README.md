@@ -25,6 +25,12 @@ framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
 no credentials on the host. Bring a wallet to leave a juror verdict on
 `/review` or to verify an anchor client-side on `/anchors`.
 
+**The parlor:** <https://sekats.thisyearnofear.com> — the public canary
+that predates this console. It answers one question: does the agent's
+claimed contract still match the live arena (HOLD/DRIFT)? The console is
+the governance surface; the parlor is the proof-of-honesty artifact. The
+two link to each other.
+
 ## Screens
 
 1. **Quality Surface** (`/`) — the broken-loop callout, shadow-LLM
