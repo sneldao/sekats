@@ -854,22 +854,11 @@ func (a *app) handleVerdicts(w http.ResponseWriter, r *http.Request) {
 	reportMarkdown, _ := verdicts.BuildReport(st.Quality.DisagreementsSample, a.vStore.All(), a.adapter.Labels())
 	// Render markdown as plain text in a pre tag for simplicity; a full
 	// markdown-to-HTML renderer would be overkill for a console screen.
-	htmlContent := `<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<title>Verdict Report — Sekats</title>
-<style>
-  body{background:#0f1115;color:#e6e8ec;font-family:sans-serif;margin:0;padding:32px;}
-  pre{background:#171a21;border:1px solid #2a2e38;border-radius:20px;font-size:13px;white-space:pre-wrap;max-width:800px;line-height:1.6;}
-  h1{margin-bottom:4px;}
-  .subtitle{color:#8b90a0;margin-top:0;margin-bottom:24px;}
-</style></head><body>
-<h1>Verdict Report</h1>
-<p class="subtitle">Human adjudications joined against the ` + src.Kind + ` decision log — generated at ` + time.Now().UTC().Format("2006-01-02 15:04 UTC") + `</p>
-<pre>` + escapeHTML(reportMarkdown) + `</pre>
-<p style="margin-top:24px"><a href="/export?download=true" style="color:#6ee7b7">Download JSON report</a></p>
-</body></html>`
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(htmlContent))
+	a.renderPage(w, "page-verdicts", "Verdict Report", struct {
+		Report    string
+		Source    string
+		Generated string
+	}{reportMarkdown, src.Kind, time.Now().UTC().Format("2006-01-02 15:04 UTC")})
 }
 
 // exportItemJSON is the serialisable shape for one review item.

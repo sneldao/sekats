@@ -1,22 +1,30 @@
 :root {
-  --bg: #0f1115;
-  --panel: #171a21;
-  --border: #2a2e38;
-  --text: #e6e8ec;
-  --muted: #8b90a0;
+  --bg: #141118;
+  --panel: #1b1820;
+  --border: #2d2936;
+  --text: #ece8e3;
+  --muted: #97919f;
   --accent: #6ee7b7;
   --monad: #836ef9;
   --danger: #f87171;
   --warn: #fbbf24;
+  --serif: "Fraunces", Georgia, serif;
+  --grotesk: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background-color: var(--bg);
+  /* the parlor's woven dither, night-shifted */
+  background-image:
+    radial-gradient(2px 2px at 25% 25%, rgba(131, 110, 249, 0.07) 0 70%, transparent 100%),
+    radial-gradient(2px 2px at 75% 75%, rgba(236, 232, 227, 0.04) 0 70%, transparent 100%);
+  background-size: 22px 22px;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--grotesk);
 }
 
 .topnav {
@@ -27,14 +35,26 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.topnav .brand { font-weight: 700; margin-right: 16px; }
+.topnav .brand {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 22px;
+  margin-right: 16px;
+}
 .topnav a { color: var(--muted); text-decoration: none; }
 .topnav a:hover { color: var(--text); }
 .topnav a.active { color: var(--accent); font-weight: 600; }
+.topnav .nav-ext { margin-left: auto; color: var(--monad); }
+.topnav .nav-ext:hover { color: var(--text); }
 
 .content { padding: 32px; max-width: 1000px; margin: 0 auto; }
 
-h1 { margin-bottom: 4px; }
+h1, h2 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; }
+h1 { margin-bottom: 4px; font-size: 34px; }
+
+code, pre, .mono, .mcard { font-family: var(--mono); }
+
+.report { margin: 0; font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
 .subtitle { color: var(--muted); margin-top: 0; margin-bottom: 24px; }
 
 .callout {

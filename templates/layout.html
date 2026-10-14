@@ -5,6 +5,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{.Title}} — Sekats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Space+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/app.css">
   <script src="/static/htmx/htmx.min.js"></script>
 </head>
@@ -18,10 +21,19 @@
     <a href="/anchors" data-nav="anchors">Anchors</a>
     <a href="/trends" data-nav="trends">Trends</a>
     <a href="/verdicts" data-nav="verdicts">Verdict Report</a>
+    <a class="nav-ext" href="https://sekats.thisyearnofear.com">the parlor ↗</a>
   </nav>
   <main class="content">
     {{.Body}}
   </main>
+  <script>
+    (function () {
+      var p = location.pathname;
+      document.querySelectorAll(".topnav a[data-nav]").forEach(function (a) {
+        if (a.getAttribute("href") === p) a.classList.add("active");
+      });
+    })();
+  </script>
 </body>
 </html>
 {{end}}
