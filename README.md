@@ -139,7 +139,22 @@ needed. Other env vars:
   `RPC unavailable`, never a fabricated zero. Transaction count is the wallet's
   outgoing nonce, not its incoming transfers.
 - `SEKATS_JURY_CONTRACT` — `SekatsJury` address enabling permissionless
-  juror verdicts on `/review`; unset hides the buttons.
+  juror verdicts on `/review`; unset hides the buttons. When set, a
+  background indexer also reconstructs the juror roster from `JurorVerdict`
+  logs for `/api/jury` (cursor persisted to `data/jury-roster.json`).
+- `SEKATS_JURY_FROM_BLOCK` — first block the juror indexer scans; pin near
+  contract deployment. Default: recent-50000 lookback.
+- `SEKATS_INDEX_RPC` — endpoint for the juror log scan, default
+  `SEKATS_PUBLIC_RPC`. Public Monad RPCs cap `eth_getLogs` near 100 blocks;
+  an indexer-grade endpoint (Envio HyperRPC, Alchemy) plus
+  `SEKATS_LOG_CHUNK` (default `100`) converges far faster.
+- `SEKATS_NANSEN_API_KEY` — Nansen Profiler key (`api.nansen.ai`). Enables
+  wallet labels on the agent treasury line, anchor attesters, and the juror
+  roster (`/api/wallet-labels`, `labels` in `/api/jury`,
+  `attesterLabels` in `/api/anchors`). Unset: no labels render and APIs
+  report `disabled` — nothing is fabricated. Optional offline fallback:
+  `data/nansen-labels.json` snapshot (`{address: {labels: [...], as_of}}`)
+  serves `source: "snapshot"` when live calls are unavailable.
 - `SEKATS_PUBLIC_RPC` — public browser verification RPC, default
   `https://rpc.monad.xyz`. This URL is exposed in HTML, JSON and cast commands;
   use only a public, unauthenticated endpoint that allows browser CORS.

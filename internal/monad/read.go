@@ -37,6 +37,7 @@ func ValidRPC(endpoint string) bool {
 type Client struct {
 	endpoint string
 	http     *http.Client
+	logChunk uint64 // eth_getLogs window; 0 = DefaultLogChunk
 }
 
 func NewClient(endpoint string) *Client {

@@ -136,12 +136,12 @@ func TestRegistryEscapesHTMLAndShell(t *testing.T) {
 	if strings.Contains(w.Body.String(), "<script>alert(1)</script>") || w.Code != 200 {
 		t.Fatal("draft ID was not safely escaped")
 	}
-	command := a.anchorRegistry().Anchors[0].CastCall
+	command := a.anchorRegistry(context.Background()).Anchors[0].CastCall
 	if !strings.Contains(command, `'https://rpc.example/?q='\'';echo'`) {
 		t.Fatalf("unsafe shell command %s", command)
 	}
 	a.attestContract = ""
-	if a.anchorRegistry().Anchors[0].CastCall != "" {
+	if a.anchorRegistry(context.Background()).Anchors[0].CastCall != "" {
 		t.Fatal("unconfigured contract produced a cast call")
 	}
 }

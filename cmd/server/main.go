@@ -35,6 +35,8 @@ import (
 	"github.com/sneldao/sekats/internal/adapters/summarizer"
 	"github.com/sneldao/sekats/internal/attest"
 	"github.com/sneldao/sekats/internal/engine"
+	"github.com/sneldao/sekats/internal/enrich"
+	"github.com/sneldao/sekats/internal/jury"
 	"github.com/sneldao/sekats/internal/live"
 	"github.com/sneldao/sekats/internal/monad"
 	"github.com/sneldao/sekats/internal/policy"
@@ -61,6 +63,8 @@ type app struct {
 	juryContract     string // permissionless juror-verdict contract, "" = off
 	publicRPC        string
 	treasury         *monad.TreasuryReader
+	enricher         *enrich.Client
+	juryWatcher      *jury.Watcher
 	approvalMu       sync.Mutex // serialize approval/discard/relay transitions
 	policyFile       string     // operator-configured resulting policy, never a client path
 }
@@ -133,6 +137,23 @@ func main() {
 		treasury:         monad.NewTreasuryReader(envOr("SEKATS_RPC", "https://rpc.monad.xyz"), os.Getenv("SEKATS_AGENT_ADDRESS")),
 		policyFile:       os.Getenv("SEKATS_POLICY_FILE"),
 	}
+	a.enricher = enrich.New(os.Getenv("SEKATS_NANSEN_API_KEY"), dataDir)
+	var juryFrom uint64
+	if v := os.Getenv("SEKATS_JURY_FROM_BLOCK"); v != "" {
+		if n, err := strconv.ParseUint(v, 10, 64); err == nil {
+			juryFrom = n
+		}
+	}
+	indexRPC := envOr("SEKATS_INDEX_RPC", a.publicRPC)
+	indexClient := monad.NewClient(indexRPC)
+	if v := os.Getenv("SEKATS_LOG_CHUNK"); v != "" {
+		if n, err := strconv.ParseUint(v, 10, 64); err == nil {
+			indexClient.SetLogChunk(n)
+		}
+	}
+	a.juryWatcher = jury.NewWatcher(indexClient, a.juryContract, juryFrom, a.enricher,
+		filepath.Join(dataDir, "jury-roster.json"))
+	go a.juryWatcher.Start(context.Background())
 	if err := a.promos.Load(); err != nil {
 		log.Printf("loading promotion state: %v", err)
 	}
@@ -160,6 +181,8 @@ func main() {
 	mux.HandleFunc("/promotions/", a.handlePromotionAction)
 	mux.HandleFunc("/anchors", a.handleAnchors)
 	mux.HandleFunc("/api/anchors", a.handleAnchorsJSON)
+	mux.HandleFunc("/api/jury", a.handleJury)
+	mux.HandleFunc("/api/wallet-labels", a.handleWalletLabels)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	// Root-level static files (favicon, robots, sitemap, manifest, og image)
@@ -350,11 +373,17 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 	a.data.Refresh(a.adapter)
 	_, surf, src, _, _, _ := a.data.Snapshot()
 	staged, approved, _ := a.promos.Counts()
+	treasury := a.treasury.Snapshot(r.Context())
+	var agentLabels enrich.Result
+	if treasury.Status == "ready" {
+		agentLabels = a.enricher.Lookup(r.Context(), treasury.Address)
+	}
 	a.renderPage(w, "page-home", "Quality Surface", struct {
 		Surface    quality.Surface
 		Source     quality.SourceInfo
 		Treasury   monad.Treasury
 		Agent      string
+		WalletInfo enrich.Result
 		Promotions struct {
 			Staged   int
 			Approved int
@@ -364,8 +393,9 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 	}{
 		Surface:  surf,
 		Source:   src,
-		Treasury: a.treasury.Snapshot(r.Context()),
+		Treasury: treasury,
 		Agent:    agentName(a.adapter),
+		WalletInfo: agentLabels,
 		Promotions: struct {
 			Staged   int
 			Approved int

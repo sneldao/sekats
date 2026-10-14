@@ -305,6 +305,35 @@ func TestAdapterStateAndLiveIsolation(t *testing.T) {
 	}
 }
 
+// Nansen off + no jury contract: the enrichment APIs answer honestly —
+// "unconfigured"/"disabled" sources, never fabricated labels.
+func TestJuryAndLabelAPIsWhenDisabled(t *testing.T) {
+	a := pipelineApp(t, fixtureDir(t), poker.New())
+	w := request(t, a.handleJury, "GET", "/api/jury")
+	var jury map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &jury); err != nil {
+		t.Fatal(err)
+	}
+	if jury["source"] != "unconfigured" {
+		t.Fatalf("jury source = %v, want unconfigured", jury["source"])
+	}
+
+	w = request(t, a.handleWalletLabels, "GET", "/api/wallet-labels?address=0x260e6103d23aab166c56417f3ba28af4239b348b")
+	var labels map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &labels); err != nil {
+		t.Fatal(err)
+	}
+	if labels["source"] != "disabled" {
+		t.Fatalf("labels source = %v, want disabled", labels["source"])
+	}
+	// Rejects non-GET.
+	w = httptest.NewRecorder()
+	a.handleWalletLabels(w, httptest.NewRequest("POST", "/api/wallet-labels", nil))
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("POST status = %d, want 405", w.Code)
+	}
+}
+
 func TestJuryVerdictMarkupGatedByContract(t *testing.T) {
 	off := pipelineApp(t, fixtureDir(t), poker.New())
 	w := request(t, off.handleReview, "GET", "/review")

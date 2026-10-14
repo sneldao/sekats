@@ -47,6 +47,10 @@
   {{if eq .Treasury.Status "ready"}}
   <span class="src-pill src-live">READ-ONLY</span>
   the agent you're supervising holds <strong>{{.Treasury.Balance}} MON, {{.Treasury.TxCount}} txs</strong>
+  {{if .WalletInfo.Labels}}
+  <p class="wallet-labels">{{range .WalletInfo.Labels}}<span class="wallet-label">{{.Label}}</span>{{end}}
+    <span class="labels-src">labels by Nansen{{if eq .WalletInfo.Source "snapshot"}} (cached snapshot){{end}}</span></p>
+  {{end}}
   <p class="muted"><code>{{.Treasury.Address}}</code> · checked {{.Treasury.CheckedAt.Format "2006-01-02 15:04:05 UTC"}} · cached up to 15 seconds · txs is the outgoing transaction count (nonce)</p>
   {{else}}
   Agent treasury: <strong>{{.Treasury.Status}}</strong>.

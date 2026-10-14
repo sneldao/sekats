@@ -12,7 +12,7 @@
     <dl class="anchor-details">
       <dt>draftKey</dt><dd><code>{{.DraftKey}}</code></dd>
       <dt>docHash</dt><dd><code>{{.DocHash}}</code></dd>
-      <dt>Attester</dt><dd><code>{{if .Attester}}{{.Attester}}{{else}}not recorded{{end}}</code></dd>
+      <dt>Attester</dt><dd><code>{{if .Attester}}{{.Attester}}{{else}}not recorded{{end}}</code>{{if .AttesterLabels}}{{range .AttesterLabels}} <span class="wallet-label">{{.Label}}</span>{{end}}{{end}}</dd>
       <dt>Contract</dt><dd><code>{{if .Contract}}{{.Contract}}{{else}}not configured{{end}}</code></dd>
       <dt>Transaction</dt><dd>{{if .TxURL}}<a href="{{.TxURL}}" target="_blank" rel="noopener noreferrer"><code>{{.TxHash}}</code></a>{{else}}not recorded{{end}}</dd>
       {{if .AnchoredAt}}<dt>Anchored at</dt><dd>{{.AnchoredAt.Format "2006-01-02 15:04:05 UTC"}}</dd>{{end}}

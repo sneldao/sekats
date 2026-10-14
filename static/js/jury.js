@@ -60,7 +60,44 @@ function refreshJuryBox() {
   for (const el of list.querySelectorAll("[data-jury-tally]")) {
     total += BigInt(el.dataset.agent || 0) + BigInt(el.dataset.shadow || 0);
   }
-  box.innerHTML = `<strong>${total}</strong> juror verdict${total === 1n ? "" : "s"} on-chain across this queue`;
+  box.innerHTML = `<strong>${total}</strong> juror verdict${total === 1n ? "" : "s"} on-chain across this queue` +
+    `<div class="jury-roster" id="jury-roster"></div>`;
+  refreshRoster();
+}
+
+// The server reconstructs the roster from JurorVerdict logs and labels
+// wallets via Nansen when configured — so a "Smart Money" juror reads
+// differently from an anonymous one. Absent labels, render addresses alone.
+async function refreshRoster() {
+  const roster = document.getElementById("jury-roster");
+  if (!roster) return;
+  try {
+    const res = await fetch("/api/jury", { credentials: "omit" });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.jurors || !data.jurors.length) return;
+    roster.innerHTML = "";
+    for (const j of data.jurors) {
+      const chip = document.createElement("span");
+      chip.className = "juror-chip";
+      chip.textContent = shortAddr(j.address);
+      const side = j.agent_votes + j.shadow_votes;
+      chip.title = `${side} verdict${side === 1 ? "" : "s"} · agent ${j.agent_votes} · shadow ${j.shadow_votes}`;
+      for (const l of (j.labels || []).slice(0, 3)) {
+        const tag = document.createElement("em");
+        tag.className = "wallet-label";
+        tag.textContent = l.label;
+        chip.append(" ", tag);
+      }
+      roster.append(chip);
+    }
+    if (data.jurors.some(j => j.labels_source)) {
+      const credit = document.createElement("span");
+      credit.className = "labels-src";
+      credit.textContent = "labels by Nansen";
+      roster.append(credit);
+    }
+  } catch { /* roster is enrichment — silent */ }
 }
 
 // Reflect the visitor's existing votes passively (eth_accounts, no popup).

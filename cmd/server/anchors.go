@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,15 +10,17 @@ import (
 	"time"
 
 	"github.com/sneldao/sekats/internal/attest"
+	"github.com/sneldao/sekats/internal/enrich"
 	"github.com/sneldao/sekats/internal/monad"
 )
 
 type anchorRow struct {
-	DraftID    string     `json:"draftID"`
-	DraftKey   string     `json:"draftKey"`
-	DocHash    string     `json:"docHash"`
-	Attester   string     `json:"attester"`
-	TxHash     string     `json:"txHash"`
+	DraftID    string         `json:"draftID"`
+	DraftKey   string         `json:"draftKey"`
+	DocHash    string         `json:"docHash"`
+	Attester   string         `json:"attester"`
+	AttesterLabels []enrich.Label `json:"attesterLabels,omitempty"`
+	TxHash     string         `json:"txHash"`
 	TxURL      string     `json:"monadscanURL"`
 	Contract   string     `json:"contract"`
 	DocURL     string     `json:"docURL"`
@@ -31,7 +34,7 @@ type anchorRegistry struct {
 	Anchors  []anchorRow `json:"anchors"`
 }
 
-func (a *app) anchorRegistry() anchorRegistry {
+func (a *app) anchorRegistry(ctx context.Context) anchorRegistry {
 	view := anchorRegistry{RPC: a.publicRPC, Contract: a.attestContract, Anchors: make([]anchorRow, 0)}
 	for _, rec := range a.attests.Anchored() {
 		contract := rec.Contract
@@ -47,6 +50,11 @@ func (a *app) anchorRegistry() anchorRegistry {
 		}
 		if rec.TxHash != "" {
 			row.TxURL = strings.TrimRight(a.attestExplorer, "/") + "/tx/" + url.PathEscape(rec.TxHash)
+		}
+		if rec.Attester != "" {
+			if res := a.enricher.Lookup(ctx, rec.Attester); len(res.Labels) > 0 {
+				row.AttesterLabels = res.Labels
+			}
 		}
 		if monad.ValidAddress(contract) && monad.ValidRPC(view.RPC) {
 			row.CastCall = "cast call " + contract + ` "anchored(bytes32)(bytes32)" ` + row.DraftKey +
@@ -79,7 +87,7 @@ func (a *app) handleAnchors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	a.renderPage(w, "page-anchors", "Anchors Registry", a.anchorRegistry())
+	a.renderPage(w, "page-anchors", "Anchors Registry", a.anchorRegistry(r.Context()))
 }
 
 func (a *app) handleAnchorsJSON(w http.ResponseWriter, r *http.Request) {
@@ -92,5 +100,5 @@ func (a *app) handleAnchorsJSON(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	json.NewEncoder(w).Encode(a.anchorRegistry())
+	json.NewEncoder(w).Encode(a.anchorRegistry(r.Context()))
 }
