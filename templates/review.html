@@ -2,6 +2,12 @@
 <h1>Review Queue</h1>
 <p class="subtitle">Decisions where the agent's action and the shadow-LLM review disagreed. A human calls it.</p>
 
+{{if .Jury.On}}<section class="jury-intro" data-testid="jury-intro">
+  <strong>Sit the jury:</strong> connect any Monad wallet and side with the agent or the
+  shadow on any row — your verdict writes directly to the jury contract. No account, no
+  relay, no asking us. This is the product's front door.
+</section>{{end}}
+
 <section class="grid" id="review-counts" data-testid="review-counts">
   {{template "review-counts-inner" .}}
 </section>

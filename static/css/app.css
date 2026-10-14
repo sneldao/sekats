@@ -165,21 +165,43 @@ code, pre, .mono, .mcard { font-family: var(--mono); }
 .btn-accept:hover { background: var(--accent); color: var(--bg); }
 .btn-reject:hover { border-color: var(--danger); color: var(--danger); }
 
-/* Monad brand accent for chain-touching surfaces */
-.judge-strip {
-  border: 1px solid var(--monad);
-  border-radius: 10px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  color: var(--muted);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
+/* Hero + role doors (GTM made visible) */
+.hero { padding: 4px 0 2px; }
+.hero-kicker {
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--monad); margin: 0 0 10px;
 }
-.judge-strip strong { color: var(--monad); }
-.judge-strip a { color: var(--text); }
-.judge-strip a:hover { color: var(--monad); }
+.hero-title {
+  font-size: 44px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 12px;
+}
+.hero-title code { font-size: 0.78em; color: var(--accent); }
+.hero-sub { max-width: 64ch; color: var(--muted); font-size: 16.5px; line-height: 1.55; margin: 0; }
+.hero-sub b { color: var(--text); font-weight: 500; }
+
+.doors {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 26px 0 6px;
+}
+.door {
+  display: block; border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px; background: var(--panel); text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.door:hover { border-color: var(--monad); transform: translateY(-2px); }
+.door-seat { display: block; font-family: var(--serif); font-size: 20px; color: var(--text); margin-bottom: 8px; }
+.door-desc { display: block; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+.door-cta {
+  display: block; margin-top: 14px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--monad);
+}
+.operator-note { font-size: 13px; margin: 10px 0 0; }
+@media (max-width: 800px) { .doors { grid-template-columns: 1fr; } .hero-title { font-size: 32px; } }
+
+.jury-intro {
+  border: 1px solid var(--monad); border-radius: 10px; padding: 12px 16px;
+  margin-bottom: 16px; font-size: 13.5px; color: var(--muted); line-height: 1.5;
+  background: rgba(131, 110, 249, 0.06);
+}
+.jury-intro strong { color: var(--monad); }
 
 /* Permissionless jury verdicts (SekatsJury) */
 .jury-row {

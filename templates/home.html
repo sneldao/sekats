@@ -1,13 +1,37 @@
 {{define "page-home"}}
-<h1>Quality Surface</h1>
-<p class="subtitle">{{.Agent}} · {{if .Source.Synthetic}}Synthetic decisions for an offline pipeline demonstration.{{else}}Live signal from the agent's own decision log — not a mock.{{end}}</p>
-
-<section class="judge-strip" data-testid="judge-strip">
-  <strong>Try it on Monad:</strong>
-  <span>1 · <a href="/review">Side with a verdict</a> — your wallet writes to chain</span>
-  <span>2 · <a href="/promotions">Watch rejections draft policy</a> — nothing auto-applies</span>
-  <span>3 · <a href="/anchors">Verify an anchor yourself</a> — your browser checks the contract, not us</span>
+<section class="hero" data-testid="hero">
+  <p class="hero-kicker">sekats · stakes spelled backwards · on Monad</p>
+  <h1 class="hero-title">You can't <code>assertEquals</code> an agent.</h1>
+  <p class="hero-sub">Born from a real-money poker agent — <b>Stack Cartographer</b> has played
+    <b>21.5K arena hands</b> from a wallet that signs its own transactions. Sekats is the
+    layer that keeps agents like it accountable.</p>
 </section>
+
+<section class="doors" data-testid="doors">
+  <a class="door" href="/review">
+    <span class="door-seat">Sit the jury</span>
+    <span class="door-desc">Any Monad wallet can vote on a disputed call — verdicts write
+      straight to the jury contract. No signup, no relay. The 30-second way in.</span>
+    <span class="door-cta">review queue →</span>
+  </a>
+  <a class="door" href="/promotions">
+    <span class="door-seat">Take the operator seat</span>
+    <span class="door-desc">Repeated rejections auto-draft a policy edit; an approver's
+      EIP-712 signature anchors it on-chain. Built for teams whose agents move real money.</span>
+    <span class="door-cta">promotion pipeline →</span>
+  </a>
+  <a class="door" href="/anchors">
+    <span class="door-seat">Audit without asking</span>
+    <span class="door-desc">Re-hash the canonical document in your browser and read the
+      contract getter yourself. Match, or don't believe us.</span>
+    <span class="door-cta">anchors registry →</span>
+  </a>
+</section>
+<p class="muted operator-note">Running your own agent? The adapter interface plugs any
+  decision log into this loop — <a href="https://github.com/sneldao/sekats">github.com/sneldao/sekats</a>.</p>
+
+<h2 class="section-title">Quality surface</h2>
+<p class="subtitle">{{.Agent}} · {{if .Source.Synthetic}}Synthetic decisions for an offline pipeline demonstration.{{else}}Live signal from the agent's own decision log — not a mock.{{end}}</p>
 
 <div class="source-badge" data-testid="source-badge">
   {{if eq .Source.Kind "live"}}
