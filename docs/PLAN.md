@@ -238,6 +238,26 @@ On-chain, verified end-to-end on Monad mainnet (2026-10-13):
   `SEKATS_JURY_CONTRACT`; jurors send their own txs, so the signer-free
   parlor can offer it too.
 
+### Juror roster + Nansen wallet labels (2026-10-14)
+
+- `internal/jury` tails `JurorVerdict` logs server-side and serves
+  `GET /api/jury`: deduped juror roster with per-wallet current
+  agent/shadow tallies. Public Monad RPCs cap `eth_getLogs` at ~100
+  blocks (verified rpc.monad.xyz, drpc free), so the watcher scans
+  100-block chunks in the background with a persisted cursor
+  (`data/jury-roster.json`) starting at `SEKATS_JURY_FROM_BLOCK`
+  (pinned 113,000,000 on snel-bot — deploy was ~113.14M). Once at head
+  it idles at 15s ticks. `SEKATS_INDEX_RPC` + `SEKATS_LOG_CHUNK` allow
+  an indexer-grade endpoint (Envio HyperRPC, Alchemy) with no code
+  change — that swap also satisfies the Envio sponsor bounty.
+- `internal/enrich` calls Nansen `POST /api/v1/profiler/address/labels`
+  (`chain=monad`) when `SEKATS_NANSEN_API_KEY` is set, 24h cache +
+  `data/nansen-labels.json` snapshot fallback. Surfaces: treasury line
+  on `/`, `attesterLabels` on `/anchors`, juror chips on `/review`,
+  `GET /api/wallet-labels`. Without a key everything reports
+  `disabled`/`snapshot` honestly — no fabricated labels. The API key
+  is server-side only; browsers see labels, never the key.
+
 ### Deployment (2026-10-13)
 
 Public demo at https://console.sekats.thisyearnofear.com — `snel-bot`,
@@ -246,7 +266,9 @@ Public demo at https://console.sekats.thisyearnofear.com — `snel-bot`,
 with `SEKATS_ATTEST=off` — the parlor holds no signer keys, same
 credential-free rule as the QC canary; the recorded anchor (tx
 `0x3299f04a…c072` on contract `0x06bce5d5…c3bf`) displays from the synced
-`data/attestations.json` with a monadscan link. Deploy flow: cross-compile
-`CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/server-linux
-./cmd/server` (remote Go is 1.22, too old), rsync tree + `data/` state,
+`data/attestations.json` with a monadscan link. Deploy flow: rsync tree
+to `/opt/sekats-console` (exclude `/data`, `/bin`, `/videos`; use anchored
+excludes like `/server` — bare `server` also matches `cmd/server/`),
+then `CGO_ENABLED=0 go build -o bin/server-linux ./cmd/server` on the box
+(Go 1.22 auto-downloads the go.mod toolchain) and
 `systemctl restart sekats-console`.

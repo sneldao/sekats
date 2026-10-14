@@ -96,7 +96,10 @@ Also not proven:
    it through `ETH_PRIVATE_KEY`. Environment/process access is still sensitive.
    Subprocess stderr and raw output are not returned as diagnostics. Browser
    chain-add metadata uses a separate public `SEKATS_WALLET_RPC`, not a possibly
-   credentialed service RPC URL.
+   credentialed service RPC URL. `SEKATS_NANSEN_API_KEY` is likewise
+   server-side only: it authorizes outbound calls to api.nansen.ai and must
+   never appear in HTML, JS, API responses, or logs — browsers see labels,
+   never the key.
 9. **Signature scope.** Only 65-byte, low-S secp256k1 EOA signatures are supported,
    with recovery IDs 0/1 or 27/28. EIP-1271 contract-wallet signatures and EIP-2098
    compact signatures are not supported. Document SHA-256 and EIP-712 Keccak-256
