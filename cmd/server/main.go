@@ -162,6 +162,18 @@ func main() {
 	mux.HandleFunc("/api/anchors", a.handleAnchorsJSON)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
+	// Root-level static files (favicon, robots, sitemap, manifest, og image)
+	// live in staticDir but must be served at conventional paths.
+	for _, name := range []string{
+		"favicon.svg", "apple-touch-icon.png", "robots.txt",
+		"site.webmanifest", "sitemap.xml", "og.jpg",
+	} {
+		name := name
+		mux.HandleFunc("/"+name, func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, filepath.Join(staticDir, name))
+		})
+	}
+
 	log.Printf("sekats listening on %s (data=%s, adapter=%s, source=%s)", addr, dataDir, ad.Name(), ds.src.Kind)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("serve %s: %v", addr, err)
