@@ -2,7 +2,8 @@
 
 > **TGGLEWARS (Nov 26–29, 2026):** this repo is the Track 02 entry for the
 > WeMakeDevs × Flagsmith hackathon — plan and implementation status in
-> [`docs/TGGLEWARS.md`](docs/TGGLEWARS.md).
+> [`docs/TGGLEWARS.md`](docs/TGGLEWARS.md). Demo video:
+> [“approval is not rollout” (2m31)](https://github.com/sneldao/sekats/releases/tag/tgglewars-demo-video).
 
 **You can't `assertEquals` an agent.**
 

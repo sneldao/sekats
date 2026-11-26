@@ -3,7 +3,7 @@
 **Date:** 2026-11-25 (implementation status updated 2026-11-26)
 **Event:** TGGLEWARS, WeMakeDevs × Flagsmith — Nov 26–29, 2026 (hacking 8 AM IST Nov 26 → submissions 8 PM IST Nov 29)
 **Track:** 02 — AI Agents and Feature Flags ($1,000 cash)
-**Entry type:** extension of this existing repo. The hackathon-specific integration is consolidated into a single commit published inside the official hacking window; the rules permit head starts/existing projects, but confirm in the Flagsmith Discord anyway.
+**Entry type:** extension of this existing repo. The hackathon-specific integration is consolidated into a single commit published inside the official hacking window; the published rules explicitly permit head starts/existing projects; no separate eligibility exception is required.
 
 ## TL;DR
 
@@ -72,12 +72,12 @@ Realistic slice, in order:
 3. ✅ Promotion pipeline: approve → create flag + initial rollout via Flagsmith API, surfaced on the draft card.
 4. ✅ Experiment wiring: replayed decision outcomes tagged by variant, fed as events; quality surface shows experiment state and win probability when Flagsmith has enough data.
 5. ✅ Validate the flow against live Flagsmith Cloud, including edge propagation, event acceptance, warehouse refresh, and the honest data-floor state.
-6. ☐ Demo video. The README setup/usage section is done.
+6. ✅ Demo video. “approval is not rollout” (2m31) is rendered, captioned, and hosted as a public GitHub release asset: https://github.com/sneldao/sekats/releases/tag/tgglewars-demo-video — built from real approval, provisioning, replay, dashboard, and warehouse collecting-data evidence captured from a fresh disposable fixture experiment.
 
 ## Submission checklist (rules)
 
 - [x] Public GitHub repo with README: setup steps + how Flagsmith is used
-- [ ] Short demo video: the broken-loop numbers → approve a draft → flag created → partial rollout → replay/exposure events → warehouse collecting-data state or verdict → human patch decision
+- [x] Short demo video: the broken-loop numbers → approve a draft → flag created → partial rollout → replay/exposure events → warehouse collecting-data state or verdict → human patch decision
 - [ ] Register at wemakedevs.org/hackathons/flagsmith before the deadline (every team member)
 - [ ] Submit before 8 PM IST, Nov 29 — no late submissions
 
