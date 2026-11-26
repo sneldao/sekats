@@ -76,6 +76,28 @@
   </p>
 </section>
 
+{{if .Rollouts}}
+<h2 class="section-title">Graduated rollouts</h2>
+<section class="grid" data-testid="rollout-surface">
+  {{range .Rollouts}}
+  <div class="card rollout-card" data-testid="rollout-surface-card">
+    <h3>{{.FlagName}}</h3>
+    {{if .CandidateWinOK}}
+    <p class="big-number">{{printf "%.1f" .CandidateWinPct}}%</p>
+    <p class="muted">Flagsmith win probability for the candidate · experiment {{.ExperimentID}}</p>
+    {{else if eq .Status "running"}}
+    <p class="big-number">{{.Summary.Enrolled}}</p>
+    <p class="muted">evidence decisions enrolled · warehouse significance pending</p>
+    {{else}}
+    <p class="big-number">{{.Status}}</p>
+    <p class="muted">{{.Error}}</p>
+    {{end}}
+    <p class="muted"><a href="/promotions#draft-card-{{.DraftID}}">draft {{.DraftID}}</a>{{if .DashboardURL}} · <a href="{{.DashboardURL}}" target="_blank" rel="noopener">Flagsmith</a>{{end}}</p>
+  </div>
+  {{end}}
+</section>
+{{end}}
+
 <section class="grid">
   <div class="card" data-testid="agreement-card">
     <h3>Shadow-LLM Agreement</h3>

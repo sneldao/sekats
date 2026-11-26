@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/sneldao/sekats/internal/adapters"
@@ -16,6 +17,7 @@ import (
 	"github.com/sneldao/sekats/internal/adapters/summarizer"
 	"github.com/sneldao/sekats/internal/attest"
 	"github.com/sneldao/sekats/internal/engine"
+	"github.com/sneldao/sekats/internal/flags"
 	"github.com/sneldao/sekats/internal/promotion"
 	"github.com/sneldao/sekats/internal/review"
 	"github.com/sneldao/sekats/internal/verdicts"
@@ -72,6 +74,8 @@ func pipelineApp(t *testing.T, dir string, ad adapters.Adapter) *app {
 	return &app{
 		tmpl: tmpl, dataDir: dir, adapter: ad, data: ds, vStore: ds.verdicts,
 		promos: promos, promoteThreshold: 3, attests: attest.NewStore(""),
+		rollouts: flags.NewStore(filepath.Join(ds.stateDir, "flagsmith_rollouts.json")),
+		flagger:  flags.NewClient(flags.Config{}),
 		// No anchorer is constructed: approval and docs are strictly offline.
 	}
 }
@@ -178,16 +182,37 @@ func TestSharedAdapterPipeline(t *testing.T) {
 				t.Fatalf("threshold/deduplication/target: %+v", drafts)
 			}
 			var acceptedID int64
+			var acceptedItem review.Item
 			for _, item := range queue.All() {
-				if item.Verdict == review.VerdictPending {
+				if item.Verdict == review.VerdictPending && ad.PatternKey(item.Review()) != drafts[0].PatternKey {
 					acceptedID = item.DecisionID
+					acceptedItem = item
 					break
 				}
 			}
 			if acceptedID == 0 {
-				t.Fatal("fixture needs a separate accept case")
+				t.Fatal("fixture needs a separate accept case outside the draft pattern")
 			}
 			request(t, a.handleReviewAction, "POST", fmt.Sprintf("/review/%d/accept", acceptedID))
+			replayInputs := a.replayInputs(drafts[0])
+			if len(replayInputs) != 4 {
+				t.Fatalf("pending queue rows must not become replay evidence: %+v", replayInputs)
+			}
+			var targetInput, controlInput flags.ReplayInput
+			for _, input := range replayInputs {
+				switch input.DecisionID {
+				case evidence[0].DecisionID:
+					targetInput = input
+				case acceptedID:
+					controlInput = input
+				}
+			}
+			if targetInput.CandidateAction != targetInput.CorrectAction || targetInput.CorrectAction != evidence[0].LLMAction {
+				t.Fatalf("target pattern candidate/correct action wrong: %+v", targetInput)
+			}
+			if controlInput.CandidateAction != acceptedItem.OurAction || controlInput.CorrectAction != acceptedItem.OurAction {
+				t.Fatalf("off-pattern candidate must remain control and accepted verdicts must label control correct: %+v", controlInput)
+			}
 			report := request(t, a.handleVerdicts, "GET", "/verdicts").Body.String()
 			if !strings.Contains(report, "Adjudications") || !strings.Contains(report, "accepted on") ||
 				!strings.Contains(report, "rejected on") {
@@ -228,8 +253,9 @@ func TestSharedAdapterPipeline(t *testing.T) {
 			page := request(t, a.handlePromotions, "GET", "/promotions").Body.String()
 			if !strings.Contains(page, ad.PolicyTarget()) ||
 				!strings.Contains(page, "/path/to/"+ad.PolicyFile()) ||
-				!strings.Contains(page, `data-testid="attest-off"`) {
-				t.Fatal("approved card has wrong target, application path, or signing state")
+				!strings.Contains(page, `data-testid="attest-off"`) ||
+				!strings.Contains(page, `data-testid="rollout-not-configured"`) {
+				t.Fatal("approved card has wrong target, application path, signing state, or offline rollout state")
 			}
 			if name == summarizer.Name && strings.Contains(page, "<th>Pot</th>") {
 				t.Fatal("poker metric leaked into draft evidence")
@@ -358,5 +384,179 @@ func TestJuryVerdictMarkupGatedByContract(t *testing.T) {
 	w = request(t, on.handleReviewAction, "POST", fmt.Sprintf("/review/%d/accept", id))
 	if !strings.Contains(w.Body.String(), "data-jury-key") {
 		t.Fatal("swapped row lost jury key")
+	}
+}
+
+func TestRolloutSurfacesRender(t *testing.T) {
+	t.Setenv("SEKATS_DB", "off")
+	ad, err := adapters.Get(poker.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := pipelineApp(t, fixtureDir(t), ad)
+	rollout := flags.Rollout{
+		DraftID: "draft-1", FlagName: "sekats_policy_draft_1", Status: flags.StatusRunning,
+		ExperimentID: 44, RolloutPercent: 20, CandidatePercent: 50, CandidateWinPct: 73.2,
+		Summary: flags.ReplaySummary{
+			Replayed: 3, Enrolled: 2, ExposureSent: 2,
+			Agree:      map[string]int{flags.Control: 1, flags.Candidate: 1},
+			Violations: map[string]int{flags.Control: 1, flags.Candidate: 0},
+			Total:      map[string]int{flags.Control: 1, flags.Candidate: 1},
+		},
+		Rows:    []flags.ReplayRow{{DecisionID: 42, Variant: flags.Candidate, Enrolled: true, ShadowAction: "check", Agree: true, Source: "remote"}},
+		Results: &flags.Results{},
+	}
+	rollout.Results.Metrics = []flags.MetricResult{{MetricID: 101, Inference: map[string]*flags.Inference{flags.Candidate: {ChanceToWin: 0.732}}}}
+	rollout.CandidateWinOK = true
+	if err := a.rollouts.Put(rollout); err != nil {
+		t.Fatal(err)
+	}
+	home := request(t, a.handleHome, "GET", "/").Body.String()
+	if !strings.Contains(home, `data-testid="rollout-surface"`) || !strings.Contains(home, "73.2%") {
+		t.Fatal("quality surface does not render experiment win probability")
+	}
+	card := a.card(engine.Draft{ID: "draft-1", Status: engine.DraftApproved, Rule: "prefer check"})
+	var body strings.Builder
+	if err := a.tmpl.ExecuteTemplate(&body, "promotion-card", card); err != nil {
+		t.Fatal(err)
+	}
+	html := body.String()
+	for _, want := range []string{`data-testid="rollout-running"`, `data-testid="rollout-variant-summary"`, "sekats_policy_draft_1", "control", "candidate"} {
+		if !strings.Contains(html, want) {
+			t.Fatalf("promotion card rollout evidence missing %q:\n%s", want, html)
+		}
+	}
+}
+
+func TestApprovalProvisionsFlagsmithRollout(t *testing.T) {
+	t.Setenv("SEKATS_DB", "off")
+	ad, err := adapters.Get(poker.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var mu sync.Mutex
+	var sentEvents []flags.Event
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		path := r.URL.Path
+		switch {
+		case path == "/v1/events":
+			var body struct {
+				Events []flags.Event `json:"events"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				t.Errorf("bad events body: %v", err)
+			}
+			mu.Lock()
+			sentEvents = append(sentEvents, body.Events...)
+			mu.Unlock()
+			w.WriteHeader(http.StatusAccepted)
+		case strings.HasSuffix(path, "/warehouse-connections/") && r.Method == http.MethodGet:
+			fmt.Fprint(w, `[]`)
+		case strings.HasSuffix(path, "/warehouse-connections/") && r.Method == http.MethodPost:
+			fmt.Fprint(w, `{"id":9,"warehouse_type":"flagsmith","status":"active"}`)
+		case strings.Contains(path, "/features/") && r.Method == http.MethodGet:
+			fmt.Fprint(w, `{"count":0,"results":[]}`)
+		case strings.HasSuffix(path, "/features/") && r.Method == http.MethodPost:
+			fmt.Fprint(w, `{"id":11,"name":"sekats_policy_test","initial_value":"control","default_enabled":true,"multivariate_options":[]}`)
+		case strings.Contains(path, "/mv-options/"):
+			fmt.Fprint(w, `{"id":22,"key":"candidate","type":"unicode","string_value":"candidate","feature":11}`)
+		case strings.Contains(path, "/experiment-metrics/") && r.Method == http.MethodGet:
+			fmt.Fprint(w, `{"count":0,"results":[]}`)
+		case strings.Contains(path, "/experiment-metrics/") && r.Method == http.MethodPost:
+			fmt.Fprint(w, `{"id":101}`)
+		case strings.Contains(path, "/experiments/") && r.Method == http.MethodGet && !strings.Contains(path, "/results"):
+			fmt.Fprint(w, `{"count":0,"results":[]}`)
+		case strings.HasSuffix(path, "/experiments/") && r.Method == http.MethodPost:
+			fmt.Fprint(w, `{"id":44,"name":"experiment","status":"created"}`)
+		case strings.HasSuffix(path, "/start/"):
+			fmt.Fprint(w, `{}`)
+		case strings.HasSuffix(path, "/results/refresh/"):
+			fmt.Fprint(w, `{}`)
+		case strings.HasSuffix(path, "/results/"):
+			fmt.Fprint(w, `null`)
+		case path == "/api/v1/identities/":
+			identifier := r.URL.Query().Get("identifier")
+			variant := flags.Control
+			if strings.HasSuffix(identifier, "2") || strings.HasSuffix(identifier, "5") {
+				variant = flags.Candidate
+			}
+			phases := []string{"preflop", "flop", "turn", "river"}
+			actions := []string{"bet", "check", "call", "raise", "fold"}
+			flagRows := make([]map[string]any, 0, 80)
+			for _, phase := range phases {
+				for _, from := range actions {
+					for _, to := range actions {
+						if from == to {
+							continue
+						}
+						flagRows = append(flagRows, map[string]any{
+							"feature": map[string]any{"id": 11, "name": "sekats_policy_" + phase + "_" + from + "_to_" + to},
+							"enabled": true, "feature_state_value": variant, "variant": variant,
+							"metadata": map[string]any{"experiment": map[string]any{"id": 44, "name": "experiment", "in_experiment": true}},
+						})
+					}
+				}
+			}
+			json.NewEncoder(w).Encode(map[string]any{"flags": flagRows})
+		default:
+			t.Errorf("unexpected Flagsmith request %s %s", r.Method, path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	a := pipelineApp(t, fixtureDir(t), ad)
+	a.flagger = flags.NewClient(flags.Config{
+		APIURL: server.URL, EventsURL: server.URL, ProjectID: 7,
+		EnvironmentKey: "env", ManagementToken: "token", RolloutPercent: 20, CandidatePercent: 50,
+	})
+	_, _, _, _, _, queue := a.data.Snapshot()
+	groups := make(map[string][]review.Item)
+	for _, item := range queue.All() {
+		key := ad.PatternKey(item.Review())
+		groups[key] = append(groups[key], item)
+	}
+	var evidence []review.Item
+	for _, group := range groups {
+		if len(group) >= 3 {
+			evidence = group[:3]
+			break
+		}
+	}
+	if len(evidence) != 3 {
+		t.Fatal("fixture has no repeated pattern")
+	}
+	for _, item := range evidence {
+		request(t, a.handleReviewAction, "POST", fmt.Sprintf("/review/%d/reject", item.DecisionID))
+	}
+	drafts := a.promos.AllDrafts()
+	if len(drafts) != 1 {
+		t.Fatalf("drafts: %+v", drafts)
+	}
+	request(t, a.handlePromotionAction, "POST", "/promotions/"+drafts[0].ID+"/approve")
+	rollout, ok := a.rollouts.Get(drafts[0].ID)
+	if !ok || rollout.Status != flags.StatusRunning || rollout.ExperimentID != 44 {
+		t.Fatalf("rollout not provisioned: %+v", rollout)
+	}
+	if len(rollout.Rows) < 3 || rollout.Summary.Enrolled != len(rollout.Rows) || rollout.Summary.ExposureSent != len(rollout.Rows) {
+		t.Fatalf("replay rows/exposures wrong: rows=%d %+v", len(rollout.Rows), rollout.Summary)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	exposures, alignmentEvents := 0, 0
+	for _, event := range sentEvents {
+		switch event.Event {
+		case "$flag_exposure":
+			exposures++
+		case flags.AgreementEvent:
+			alignmentEvents++
+			if event.Value != "0" && event.Value != "1" {
+				t.Fatalf("alignment events must carry an explicit mean value: %+v", event)
+			}
+		}
+	}
+	if exposures != len(rollout.Rows) || alignmentEvents != len(rollout.Rows) {
+		t.Fatalf("expected one exposure and one labelled alignment event per replay row: exposures=%d alignment=%d rows=%d events=%d", exposures, alignmentEvents, len(rollout.Rows), len(sentEvents))
 	}
 }

@@ -81,8 +81,8 @@ For an operator's **existing** relay configuration, set:
 
 Use a new `DATA_DIR` populated with the required fixtures for the new deployment,
 or explicitly reconcile existing state. Do not treat an old contract's records as
-anchors on the new one. No new deployment address is claimed by this branch.
-Serve over HTTPS (localhost is allowed for local tests) so Web Crypto is available.
+anchors on the new one. Serve over HTTPS (localhost is allowed for local tests)
+so Web Crypto is available.
 Behind a TLS proxy, preserve the original Host and forward HTTPS to the server,
 or configure the proxy to remove Origin only after enforcing its own same-origin
 and authentication checks. The server does not blindly trust forwarded headers.
@@ -99,7 +99,11 @@ and authentication checks. The server does not blindly trust forwarded headers.
 3. `POST /promotions/{id}/signature` accepts **only**
    `{"signature":"0x<65-byte signature>"}`. The server rebuilds the document,
    recovers the address, checks its configured allowlist, persists approval,
-   and relays `anchorWithSig`. Invalid signatures do not approve drafts.
+   and relays `anchorWithSig`. When the signature first moves a pending draft
+   to approved, the same transition also provisions the adapter-neutral
+   Flagsmith rollout experiment described in [`README.md`](../README.md); that
+   measurement side effect is independent of the anchor relay and is retriable from the
+   draft card. Invalid signatures do not approve drafts.
    Relay failure leaves a valid locally approved draft with a failed record;
    the human can sign the same document again to retry. A successful response
    includes `status`, `attester`, `tx_hash`, and `tx_url`.

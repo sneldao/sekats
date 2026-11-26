@@ -36,6 +36,7 @@ import (
 	"github.com/sneldao/sekats/internal/attest"
 	"github.com/sneldao/sekats/internal/engine"
 	"github.com/sneldao/sekats/internal/enrich"
+	"github.com/sneldao/sekats/internal/flags"
 	"github.com/sneldao/sekats/internal/jury"
 	"github.com/sneldao/sekats/internal/live"
 	"github.com/sneldao/sekats/internal/monad"
@@ -55,6 +56,8 @@ type app struct {
 	data             *dataSource
 	vStore           *verdicts.Store
 	promos           *promotion.Store
+	rollouts         *flags.Store
+	flagger          *flags.Client
 	promoteThreshold int
 	anchorer         attest.Anchorer // nil = on-chain anchoring disabled
 	attests          *attest.Store
@@ -129,6 +132,8 @@ func main() {
 			ad.NewDraft,
 		),
 		promoteThreshold: threshold,
+		rollouts:         flags.NewStore(filepath.Join(ds.stateDir, "flagsmith_rollouts.json")),
+		flagger:          flags.NewClient(flags.ConfigFromEnv()),
 		attests:          attest.NewStore(filepath.Join(ds.stateDir, "attestations.json")),
 		attestExplorer:   envOr("SEKATS_EXPLORER", "https://monadscan.com"),
 		attestContract:   os.Getenv("SEKATS_ATTEST_CONTRACT"),
@@ -156,6 +161,9 @@ func main() {
 	go a.juryWatcher.Start(context.Background())
 	if err := a.promos.Load(); err != nil {
 		log.Printf("loading promotion state: %v", err)
+	}
+	if err := a.rollouts.Load(); err != nil {
+		log.Printf("loading flagsmith rollout state: %v", err)
 	}
 	if err := a.attests.Load(); err != nil {
 		log.Printf("loading attestations: %v", err)
@@ -384,6 +392,7 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 		Treasury   monad.Treasury
 		Agent      string
 		WalletInfo enrich.Result
+		Rollouts   []flags.Rollout
 		Promotions struct {
 			Staged   int
 			Approved int
@@ -391,11 +400,12 @@ func (a *app) handleHome(w http.ResponseWriter, r *http.Request) {
 			AnchorOn bool
 		}
 	}{
-		Surface:  surf,
-		Source:   src,
-		Treasury: treasury,
-		Agent:    agentName(a.adapter),
+		Surface:    surf,
+		Source:     src,
+		Treasury:   treasury,
+		Agent:      agentName(a.adapter),
 		WalletInfo: agentLabels,
+		Rollouts:   a.allRollouts(),
 		Promotions: struct {
 			Staged   int
 			Approved int
@@ -594,6 +604,168 @@ func (a *app) handleTrends(w http.ResponseWriter, r *http.Request) {
 	a.renderPage(w, "page-trends", "Trends", trend)
 }
 
+func (a *app) allRollouts() []flags.Rollout {
+	if a.rollouts == nil {
+		return nil
+	}
+	return a.rollouts.All()
+}
+
+func (a *app) rolloutState(draftID string) (flags.Rollout, bool) {
+	if a.rollouts == nil {
+		return flags.Rollout{}, false
+	}
+	return a.rollouts.Get(draftID)
+}
+
+func (a *app) replayInputs(d engine.Draft) []flags.ReplayInput {
+	_, _, _, _, _, queue := a.data.Snapshot()
+	items := queue.All()
+	inputs := make([]flags.ReplayInput, 0, len(items)+len(d.Evidence))
+	seen := make(map[int64]bool)
+	for _, item := range items {
+		if seen[item.DecisionID] {
+			continue
+		}
+		var correct string
+		switch item.Verdict {
+		case review.VerdictAccepted:
+			correct = item.OurAction
+		case review.VerdictRejected:
+			correct = item.LLMAction
+		default:
+			// Pending rows have no human label. Treating them as non-conversions
+			// would manufacture evidence against both variants, so exclude them.
+			continue
+		}
+		seen[item.DecisionID] = true
+		normalized := item.Review()
+		candidateAction := item.OurAction
+		if a.adapter.PatternKey(normalized) == d.PatternKey {
+			// The draft is pattern-scoped: outside that pattern the candidate is
+			// byte-for-byte the current policy, not a blanket shadow-LLM copy.
+			candidateAction = item.LLMAction
+		}
+		inputs = append(inputs, flags.ReplayInput{
+			DecisionID: item.DecisionID, Phase: normalized.Phase, ContextCode: normalized.ContextCode,
+			Pot: item.Pot, OriginalAction: item.OurAction, CandidateAction: candidateAction, CorrectAction: correct,
+		})
+	}
+	for _, ev := range d.Evidence {
+		if seen[ev.DecisionID] {
+			continue
+		}
+		inputs = append(inputs, flags.ReplayInput{
+			DecisionID: ev.DecisionID, Phase: ev.Phase, ContextCode: ev.ContextCode,
+			Pot: ev.Pot, OriginalAction: ev.OurAction, CandidateAction: ev.LLMAction, CorrectAction: ev.LLMAction,
+		})
+	}
+	return inputs
+}
+
+// provisionRollout is the approval side effect required by TGGLEWARS: human
+// approval creates/starts a small Flagsmith experiment. Every failure is
+// durable state on the draft card, never a hidden hard dependency of approval.
+func (a *app) provisionRollout(ctx context.Context, d engine.Draft, force bool) {
+	if a.rollouts == nil || a.flagger == nil || d.Status != engine.DraftApproved {
+		return
+	}
+	r, _ := a.rollouts.Get(d.ID)
+	if r.DraftID == "" {
+		r = flags.Rollout{DraftID: d.ID, FlagName: flags.FlagName(d.ID)}
+	}
+	if r.Status == flags.StatusRunning && len(r.Rows) > 0 && !(force && r.Summary.ExposureSent == 0) {
+		a.refreshRolloutResults(ctx, &r)
+		if err := a.rollouts.Put(r); err != nil {
+			log.Printf("persist rollout %s: %v", d.ID, err)
+		}
+		return
+	}
+	r.RolloutPercent = a.flagger.Config().RolloutPercent
+	r.CandidatePercent = a.flagger.Config().CandidatePercent
+	if !a.flagger.Config().Configured() {
+		r.Status = flags.StatusNotConfigured
+		r.Error = "Flagsmith is not configured; approval remains valid. Set FLAGSMITH_API_TOKEN, FLAGSMITH_ENVIRONMENT_KEY, and FLAGSMITH_PROJECT_ID, then use Retry rollout."
+		if err := a.rollouts.Put(r); err != nil {
+			log.Printf("persist rollout %s: %v", d.ID, err)
+		}
+		return
+	}
+
+	runCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
+	provisioned, err := a.flagger.ProvisionExperiment(runCtx, d)
+	cancel()
+	if err != nil {
+		r.Status = flags.StatusError
+		r.Error = err.Error()
+		log.Printf("flagsmith rollout %s: %v", d.ID, err)
+	} else {
+		r.Status = strings.ToLower(provisioned.Experiment.Status)
+		if r.Status == "" {
+			r.Status = flags.StatusRunning
+		}
+		r.Error = ""
+		r.FeatureID = provisioned.Feature.ID
+		r.VariantID = provisioned.Variant.ID
+		r.ExperimentID = provisioned.Experiment.ID
+		r.AgreementMetricID = provisioned.AgreementMetricID
+		r.ViolationMetricID = provisioned.ViolationMetricID
+		cfg := a.flagger.Config()
+		r.DashboardURL = strings.TrimRight(cfg.DashboardURL, "/") + fmt.Sprintf("/project/%d/environment/%s/experiments/%d", cfg.ProjectID, cfg.EnvironmentKey, provisioned.Experiment.ID)
+		if r.Status == flags.StatusRunning && (len(r.Rows) == 0 || r.Summary.ExposureSent == 0) {
+			a.replayRollout(ctx, d, &r)
+		} else if r.Status != flags.StatusRunning {
+			r.Error = "existing Flagsmith experiment is " + r.Status + "; not replaying new exposures"
+		}
+		a.refreshRolloutResults(ctx, &r)
+	}
+	if err := a.rollouts.Put(r); err != nil {
+		log.Printf("persist rollout %s: %v", d.ID, err)
+	}
+}
+
+func (a *app) replayRollout(ctx context.Context, d engine.Draft, r *flags.Rollout) {
+	pol, err := a.adapter.LoadPolicy(filepath.Join(a.dataDir, a.adapter.PolicyFile()))
+	if err != nil {
+		r.Error = "load policy for replay: " + err.Error()
+		return
+	}
+	rules, err := engine.LoadRules(filepath.Join(a.dataDir, a.adapter.RulesFile()))
+	if err != nil {
+		r.Error = "load rules for replay: " + err.Error()
+		return
+	}
+	runCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	summary, rows, err := a.flagger.RunReplay(runCtx, *r, a.replayInputs(d), pol, rules)
+	cancel()
+	r.Summary, r.Rows = summary, rows
+	if err != nil {
+		r.Error = err.Error()
+		log.Printf("flagsmith replay %s: %v", d.ID, err)
+	}
+}
+
+func (a *app) refreshRolloutResults(ctx context.Context, r *flags.Rollout) {
+	if r.ExperimentID == 0 || !a.flagger.Config().Configured() {
+		return
+	}
+	runCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
+	defer cancel()
+	// Refresh is asynchronous in Flagsmith Cloud. Errors here are transient and
+	// must not mask the locally verified replay evidence.
+	_ = a.flagger.RefreshResults(runCtx, r.ExperimentID)
+	if results, err := a.flagger.Results(runCtx, r.ExperimentID); err == nil && results != nil {
+		r.Results = results
+		if chance, ok := results.CandidateChanceToWin(r.AgreementMetricID); ok {
+			r.CandidateWinPct = chance * 100
+			r.CandidateWinOK = true
+		} else {
+			r.CandidateWinPct = 0
+			r.CandidateWinOK = false
+		}
+	}
+}
+
 // draftCard is the render shape for one policy draft on the promotions
 // screen: the draft itself, its pre-rendered patch JSON (shown once
 // approved), the adapter's target section, and the on-chain attestation
@@ -610,6 +782,8 @@ type draftCard struct {
 	AttHashShort string
 	Labels       store.Labels
 	PolicyFile   string
+	Rollout      flags.Rollout
+	RolloutOK    bool
 	WalletOn     bool
 	PolicyOn     bool
 }
@@ -625,6 +799,9 @@ func (a *app) card(d engine.Draft) draftCard {
 		PolicyFile: a.adapter.PolicyFile(),
 		WalletOn:   a.signedAnchorer() != nil,
 		PolicyOn:   a.signedAnchorer() != nil && a.policyFile != "",
+	}
+	if rollout, ok := a.rolloutState(d.ID); ok {
+		c.Rollout, c.RolloutOK = rollout, true
 	}
 	if rec, ok := a.attests.For(d.ID); ok {
 		c.Att, c.AttOK = rec, true
@@ -790,6 +967,7 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 		d, err = a.promos.Approve(id)
 		if err == nil {
 			a.anchorDraft(d)
+			a.provisionRollout(r.Context(), d, false)
 		}
 	case "attest":
 		var ok bool
@@ -798,6 +976,14 @@ func (a *app) handlePromotionAction(w http.ResponseWriter, r *http.Request) {
 			err = fmt.Errorf("draft %s is not approved", id)
 		} else {
 			a.anchorDraft(d)
+		}
+	case "experiment":
+		var ok bool
+		d, ok = a.promos.Draft(id)
+		if !ok || d.Status != engine.DraftApproved {
+			err = fmt.Errorf("draft %s is not approved", id)
+		} else {
+			a.provisionRollout(r.Context(), d, true)
 		}
 	case "discard":
 		d, err = a.promos.Discard(id)

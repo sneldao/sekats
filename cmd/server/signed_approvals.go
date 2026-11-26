@@ -138,10 +138,13 @@ func (a *app) handleSignedApproval(w http.ResponseWriter, r *http.Request, id, a
 		return
 	}
 	if d.Status == engine.DraftPending {
-		if _, err := a.promos.Approve(id); err != nil {
+		approved, err := a.promos.Approve(id)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
+		d = approved
+		a.provisionRollout(r.Context(), d, false)
 	}
 	rec := attest.Record{
 		DraftID: id, DocSHA256: strings.TrimPrefix(attest.Hex32(hash), "0x"),

@@ -1,5 +1,9 @@
 # Sekats
 
+> **TGGLEWARS (Nov 26–29, 2026):** this repo is the Track 02 entry for the
+> WeMakeDevs × Flagsmith hackathon — plan and implementation status in
+> [`docs/TGGLEWARS.md`](docs/TGGLEWARS.md).
+
 **You can't `assertEquals` an agent.**
 
 This is the human quality layer for a real autonomous poker agent — a DevFun
@@ -23,7 +27,9 @@ framework magic, on purpose. See `docs/PLAN.md` for the full rationale.
 
 **Live demo:** <https://console.sekats.thisyearnofear.com> — fixture mode,
 no credentials on the host. Bring a wallet to leave a juror verdict on
-`/review` or to verify an anchor client-side on `/anchors`.
+`/review` or to verify an anchor client-side on `/anchors`. At the time of
+writing this deployment lags `master` and does not yet demonstrate the
+Flagsmith integration; run the credentialed local flow below for that work.
 
 **The parlor:** <https://sekats.thisyearnofear.com> — the public canary
 that predates this console. It answers one question: does the agent's
@@ -34,7 +40,8 @@ two link to each other.
 ## Screens
 
 1. **Quality Surface** (`/`) — the broken-loop callout, shadow-LLM
-   agreement rate, review-provider error buckets, a data-source badge
+   agreement rate, review-provider error buckets, active Flagsmith rollout state,
+   a data-source badge
    stating whether the numbers are LIVE (read-only bridge) or FROZEN
    (stale export), and a read-only treasury line reading the agent's
    Monad balance and transaction count live from RPC.
@@ -54,7 +61,10 @@ two link to each other.
    into `postflop.promotedFromHandReviews` (the same section the agent's
    existing promotions live in), with the rejected hands as evidence. A
    human approves (→ downloadable `.policy-patch.json`) or discards.
-   Nothing is ever applied automatically. Approvals can additionally be
+   Nothing is ever applied automatically. Approval also provisions a
+   graduated Flagsmith experiment: control vs candidate at a small rollout,
+   with replay evidence and warehouse significance rendered on the approved
+   draft. Approvals can additionally be
    **signed with a human wallet and anchored on Monad**: an owner-managed
    approver signs the canonical document hash with EIP-712. The contract
    records that signer, not the service relayer. Resulting policy-file
@@ -162,10 +172,115 @@ needed. Other env vars:
   Registry reads also work with `SEKATS_ATTEST=off`; `SEKATS_ATTEST_CONTRACT`
   supplies a fallback contract for old records without an address.
 - `SEKATS_DB_HOST` / `SEKATS_DB_REMOTE` — used by `tools/sync_live.sh`.
+- `FLAGSMITH_API_TOKEN` (or `FLAGSMITH_API_KEY`) — organisation API token for the Flagsmith
+  Management API. Create it in Organisation Settings → API Access → Create
+  API Key. It stays server-side and is never rendered.
+- `FLAGSMITH_PROJECT_ID` — numeric Flagsmith project id.
+- `FLAGSMITH_ENVIRONMENT_KEY` — server-side environment key used for remote
+  identity evaluation and experiment events.
+- `FLAGSMITH_ROLLOUT_PERCENT` — percentage of decision identities enrolled
+  in each new experiment, default `20`. Use `100` for the small fixture demo;
+  use a lower percentage for a real traffic cohort.
+- `FLAGSMITH_CANDIDATE_PERCENT` — percentage of enrolled identities assigned
+  to the candidate variant, default `50` (control receives the remainder).
+- `FLAGSMITH_API_URL` / `FLAGSMITH_EVALUATION_API_URL` / `FLAGSMITH_EVENTS_URL` /
+  `FLAGSMITH_DASHBOARD_URL` — optional overrides for self-hosting. Cloud defaults
+  use the Management API at `api.flagsmith.com`, identity evaluation at
+  `edge.api.flagsmith.com`, and event ingestion at `events.api.flagsmith.com`.
+  When `FLAGSMITH_API_URL` is overridden, evaluation defaults to the same
+  self-hosted service unless `FLAGSMITH_EVALUATION_API_URL` is set separately.
+
+## Flagsmith graduated rollouts
+
+Sekats uses the Flagsmith Management API directly rather than the MCP server
+because experiment creation/start requires the API lifecycle. Minimal cloud
+setup:
+
+```
+export FLAGSMITH_API_TOKEN=<organisation-api-token>
+export FLAGSMITH_PROJECT_ID=<numeric-project-id>
+export FLAGSMITH_ENVIRONMENT_KEY=<server-side-environment-key>
+# optional for the tiny fixture demo: enroll the whole replay cohort
+export FLAGSMITH_ROLLOUT_PERCENT=100
+```
+
+For local development the values can instead be kept in the git-ignored
+`data/state/flagsmith.env` file and loaded into the server process explicitly
+(the server does not auto-read dotenv files):
+
+```
+mkdir -p data/state
+umask 077
+cat > data/state/flagsmith.env <<'EOF'
+FLAGSMITH_API_TOKEN=<organisation-api-token>
+FLAGSMITH_PROJECT_ID=<numeric-project-id>
+FLAGSMITH_ENVIRONMENT_KEY=<server-side-environment-key>
+FLAGSMITH_ROLLOUT_PERCENT=100
+EOF
+chmod 600 data/state/flagsmith.env
+set -a; . data/state/flagsmith.env; set +a
+# start the server from this same shell
+```
+
+Find the project id and environment key in the Flagsmith project/environment
+settings; create the organisation token under Organisation Settings → API
+Access. Keep all three out of git. On a human approval the server:
+
+1. ensures the environment has Flagsmith's zero-config managed warehouse;
+2. creates or reuses a multivariate flag named `sekats_policy_<draft_id>`
+   with flag value `control` and a keyed `candidate` variant;
+3. creates metrics for mean human-verdict alignment and summed policy violations;
+4. creates and starts a `sekats-<draft_id>` experiment with the configured
+   rollout and variation split;
+5. evaluates every human-verdicted disagreement as the deterministic identity
+   `decision-<id>` (falling back to draft evidence), applies the candidate only
+   inside the draft's pattern while leaving off-pattern behaviour at control,
+   excludes unlabelled pending rows rather than counting them as failures,
+   sends `$flag_exposure` plus conversion events to Flagsmith, and stores the
+   resulting local audit rows in the adapter's rollout state file
+   (`data/flagsmith_rollouts.json` for poker).
+
+Event timestamps are the replay time, not the original decision timestamps:
+this is a retrospective cohort measurement, not a reconstruction of live
+serving chronology. The approved draft card shows variant-level replay counts,
+the Flagsmith dashboard link, and win probability once the warehouse computation exists.
+The home quality surface summarizes active experiments. If Flagsmith is not
+configured or is unreachable, approval still succeeds and every unevaluated
+identity is explicit control fallback; the card says so and exposes **Retry
+rollout / refresh results**.
+
+Flagsmith rebuilds edge environment documents asynchronously after an
+experiment starts, and warehouse ingestion/results are asynchronous too. If the
+first replay shows zero exposures, wait a few seconds and retry. While
+`ExposureSent` is zero the retry re-evaluates the replay; after exposures have
+been accepted it only refreshes results, avoiding a second conversion batch.
+This protection depends on local state: if Flagsmith ingests a batch but the
+response is lost, the server cannot know it succeeded. Wait and inspect the
+dashboard after an ambiguous timeout rather than immediately repeating it.
+Flagsmith's results-refresh endpoint is asynchronous and currently throttled
+to about one refresh per five minutes, so repeat clicks can honestly return
+the previous computation.
+
+At the time of writing Flagsmith Cloud's free tier includes 50,000 requests
+per month and up to 100,000 users in experiments, but experimentation is beta,
+so check the current plan limits before a production-size replay. Flagsmith
+also withholds inference below its data floor (currently at least 50 exposed
+identities per variant; relative lift additionally requires a positive control
+mean, and occurrence metrics have their own conversion minimums). A tiny
+three-verdict fixture should honestly say "collecting data"; do not fabricate
+extra traffic to force a win probability.
+
+Retrospective human-verdict alignment is a validation signal, not proof of poker
+profitability or downstream safety. The policy-violation metric is the
+guardrail; losing or inconclusive experiments must remain visible rather than
+being silently promoted.
 
 Local state (`data/verdicts.json`, `data/pattern_rejections.json`,
-`data/policy_drafts.json`, `data/attestations.json`) is git-ignored;
-deleting it resets the console to a clean slate.
+`data/policy_drafts.json`, `data/flagsmith_rollouts.json`,
+`data/attestations.json`, plus adapter-specific files under `data/state/`) is
+git-ignored; deleting it resets the console to a clean slate. Keep
+`data/state/flagsmith.env` if you created it for live credentials; it is also
+git-ignored.
 
 ## Applying an approved patch
 

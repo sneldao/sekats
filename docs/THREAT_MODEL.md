@@ -99,11 +99,47 @@ Also not proven:
    credentialed service RPC URL. `SEKATS_NANSEN_API_KEY` is likewise
    server-side only: it authorizes outbound calls to api.nansen.ai and must
    never appear in HTML, JS, API responses, or logs — browsers see labels,
-   never the key.
+   never the key. `FLAGSMITH_API_TOKEN` and `FLAGSMITH_ENVIRONMENT_KEY` are
+   server-side Flagsmith secrets with the same rendering/logging constraints;
+   prefer the git-ignored `data/state/flagsmith.env` or a secret manager over
+   shell history or committed files.
 9. **Signature scope.** Only 65-byte, low-S secp256k1 EOA signatures are supported,
    with recovery IDs 0/1 or 27/28. EIP-1271 contract-wallet signatures and EIP-2098
    compact signatures are not supported. Document SHA-256 and EIP-712 Keccak-256
    serve different purposes; do not interchange them.
+
+## Flagsmith rollout and measurement boundary
+
+Flagsmith is the rollout/measurement control plane for the promotion harness,
+not proof that a running agent executes a policy and not an automatic patch
+mechanism. Local or wallet-signed approval remains valid when Flagsmith is
+offline; conversely, a successful Flagsmith experiment does not apply the patch.
+
+- `FLAGSMITH_API_TOKEN` is an organisation Management API token. Compromise can
+  alter flags, experiments, metrics, rollouts, or warehouse configuration and
+  thereby poison the evidence an operator sees. Use a dedicated hackathon
+  project where practical, keep the token server-side, and rotate it if it may
+  have leaked.
+- `FLAGSMITH_ENVIRONMENT_KEY` authorizes identity evaluation and experiment
+  event ingestion. A leak can poison exposure/conversion data even though it
+  cannot administer the project. Events are therefore evidence to audit, not a
+  replacement for human approval.
+- Remote assignment or warehouse unavailability falls back to explicit control
+  behaviour rather than candidate behaviour. This availability fallback does
+  not protect against a malicious or misconfigured Flagsmith project returning
+  incorrect assignments; the rollout segment, variant keys, allocations, and
+  dashboard state should be independently inspected before relying on results.
+- `data/flagsmith_rollouts.json` is a local audit cache. Flagsmith/API state is
+  the remote evidence source, while the canonical approval and policy lineage
+  remain the signed/anchored documents described above. Reconcile them before
+  acting.
+- Replay uses current event timestamps rather than original decision times.
+  It measures a deterministic retrospective cohort under assignment, not live
+  traffic chronology or cumulative production impact.
+- Human-verdict alignment is retrospective and measured on a disagreement
+  cohort, so it is selection-biased even when implemented correctly. It is a
+  validation signal beside the policy-violation guardrail, not proof of poker
+  profitability, downstream safety, or live execution.
 
 ## Legacy mode
 

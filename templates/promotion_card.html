@@ -42,6 +42,45 @@
   </div>
   <p data-wallet-status role="status" aria-live="polite"></p>
   {{else if eq .Draft.Status "approved"}}
+  <div class="rollout-block" data-testid="rollout-block">
+    <h3>Graduated rollout</h3>
+    {{if not .RolloutOK}}
+    <p class="muted" data-testid="rollout-missing">No rollout record yet. Approve the draft again or use retry after configuring Flagsmith.</p>
+    {{else if eq .Rollout.Status "not_configured"}}
+    <p data-testid="rollout-not-configured"><span class="attest-badge attest-bad">FLAGS offline</span>
+      Approval is still valid. Set <code>FLAGSMITH_API_TOKEN</code>, <code>FLAGSMITH_ENVIRONMENT_KEY</code>, and <code>FLAGSMITH_PROJECT_ID</code>, then retry.</p>
+    {{else if eq .Rollout.Status "error"}}
+    <p data-testid="rollout-error"><span class="attest-badge attest-bad">ROLLOUT ERROR</span> {{.Rollout.Error}}</p>
+    {{else}}
+    <p data-testid="rollout-running"><span class="attest-badge attest-ok">EXPERIMENT {{.Rollout.Status}}</span>
+      <code>{{.Rollout.FlagName}}</code> · {{printf "%.0f" .Rollout.RolloutPercent}}% rollout · {{printf "%.0f" .Rollout.CandidatePercent}}% candidate inside enrolled traffic
+      {{if .Rollout.DashboardURL}}· <a href="{{.Rollout.DashboardURL}}" target="_blank" rel="noopener" data-testid="flagsmith-dashboard">Flagsmith dashboard</a>{{end}}</p>
+    {{$s := .Rollout.Summary}}
+    <p class="muted" data-testid="rollout-replay-summary">Shadow replay: {{$s.Enrolled}}/{{$s.Replayed}} labelled decisions enrolled · {{$s.ExposureSent}} exposures sent{{if $s.Errors}} · {{$s.Errors}} fallback/errors{{end}}</p>
+    <table class="rollout-table" data-testid="rollout-variant-summary">
+      <thead><tr><th>Variant</th><th>Decisions</th><th>Human-aligned</th><th>Policy violations</th></tr></thead>
+      <tbody>
+        <tr><td>control</td><td>{{index $s.Total "control"}}</td><td>{{index $s.Agree "control"}}</td><td>{{index $s.Violations "control"}}</td></tr>
+        <tr><td>candidate</td><td>{{index $s.Total "candidate"}}</td><td>{{index $s.Agree "candidate"}}</td><td>{{index $s.Violations "candidate"}}</td></tr>
+      </tbody>
+    </table>
+    {{if .Rollout.Results}}
+    <p class="muted" data-testid="rollout-results">Flagsmith warehouse results{{if .Rollout.Results.AsOf}} as of {{.Rollout.Results.AsOf}}{{end}}:
+      {{if .Rollout.CandidateWinOK}}candidate win probability {{printf "%.1f" .Rollout.CandidateWinPct}}%{{else}}collecting enough post-exposure conversions for inference{{end}}{{if .Rollout.Results.SRMPValue}} · SRM p={{printf "%.4f" .Rollout.Results.SRMPValue}}{{end}}</p>
+    {{else}}
+    <p class="muted" data-testid="rollout-results-pending">Warehouse significance is pending; local replay counts above are the immediate audit evidence.</p>
+    {{end}}
+    {{if .Rollout.Rows}}
+    <details class="rollout-details" data-testid="rollout-rows"><summary>Replay rows</summary>
+      <table class="rollout-table"><thead><tr><th>Decision</th><th>Variant</th><th>Shadow action</th><th>Agree</th><th>Violations</th><th>Source</th></tr></thead><tbody>
+      {{range .Rollout.Rows}}<tr><td>#{{.DecisionID}}</td><td>{{.Variant}}</td><td>{{.ShadowAction}}</td><td>{{.Agree}}</td><td>{{.Violations}}</td><td>{{.Source}}{{if .Error}} — {{.Error}}{{end}}</td></tr>{{end}}
+      </tbody></table>
+    </details>
+    {{end}}
+    {{if .Rollout.Error}}<p class="muted" data-testid="rollout-warning">{{.Rollout.Error}}</p>{{end}}
+    {{end}}
+    <button hx-post="/promotions/{{.Draft.ID}}/experiment" hx-target="#draft-card-{{.Draft.ID}}" hx-swap="outerHTML" data-testid="rollout-retry" class="btn">Retry rollout / refresh results</button>
+  </div>
   <div class="patch-block" data-testid="draft-patch">
     <p class="muted">Patch ready — download it, then apply on the agent host:</p>
     <pre class="patch-pre" data-testid="draft-patch-json">{{.Patch}}</pre>

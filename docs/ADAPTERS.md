@@ -13,8 +13,9 @@ SEKATS_ADAPTER=poker go run ./cmd/server
 
 `DATA_DIR` still defaults to `data`. Poker's existing verdict/promotion state stays
 at its original paths. Other adapters persist verdicts, drafts, pattern evidence,
-and attestation records under `DATA_DIR/state/<adapter-name>/`, so overlapping
-decision IDs do not mix domains. To reset a demo, use a separate `DATA_DIR`.
+attestation records, and Flagsmith rollout projections under
+`DATA_DIR/state/<adapter-name>/`, so overlapping decision IDs do not mix domains.
+To reset a demo, use a separate `DATA_DIR`.
 The summarizer rejects an explicit live `SEKATS_DB` path and ignores poker's
 auto-detected snapshot.
 
@@ -31,8 +32,9 @@ accepts `phase`, `context_code`, `inputs`, `rationale`, and `outcome`; normaliza
 methods retain the old poker JSON/schema without changing existing fixtures.
 The engine's legacy `Pot` field remains a compatibility metric, unused and hidden
 for the summarizer. Rules, quality math, trends, queues, durable verdicts,
-promotion thresholds, patches, and canonical attestation documents are shared.
-Signing, anchoring, contracts, and the treasury are unchanged.
+promotion thresholds, patches, canonical attestation documents, and the
+Flagsmith graduated-rollout replay harness are shared. Signing, anchoring,
+contracts, and the treasury are unchanged.
 
 ## Third-adapter checklist (about 45 minutes)
 
@@ -74,9 +76,11 @@ With the summarizer selected, Quality Surface shows 24/60 agreement (40%),
 36 disagreements, four pending suggestions, and zero provider errors. Policy
 checks flag 36 unsafe publish decisions. Reject decisions **1, 6, 11** to stage
 an unsupported-claim policy draft. Approve it on Promotions, then download its
-patch and byte-stable attestation document. Accepting a different decision also
-appears in Verdict Report and JSON export. Restarting restores human verdicts
-and draft state.
+patch and byte-stable attestation document. Without Flagsmith credentials the
+approved card honestly records `not_configured`; with them, the same adapter-neutral
+approval provisions and replays a Flagsmith experiment. Accepting a different
+decision also appears in Verdict Report and JSON export. Restarting restores
+human verdicts, drafts, and rollout state.
 
 Approval is not policy application. The patch tool runs separately on the host
 holding the agent's policy. Attestation document generation is offline; no keys

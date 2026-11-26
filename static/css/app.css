@@ -397,3 +397,18 @@ code, pre, .mono, .mcard { font-family: var(--mono); }
 .count-pending { border-top-color: var(--warn); }
 .count-accepted { border-top-color: var(--accent); }
 .count-rejected { border-top-color: var(--danger); }
+
+/* Flagsmith graduated rollout evidence */
+.rollout-block {
+  margin-top: 12px;
+  border-top: 1px dashed var(--border);
+  padding-top: 12px;
+  font-size: 13px;
+}
+.rollout-block h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.rollout-block a { color: var(--accent); }
+.rollout-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.rollout-table th, .rollout-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.rollout-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.rollout-details summary { cursor: pointer; color: var(--muted); margin: 8px 0; }
+.rollout-card .big-number { overflow-wrap: anywhere; }

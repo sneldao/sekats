@@ -272,3 +272,40 @@ excludes like `/server` — bare `server` also matches `cmd/server/`),
 then `CGO_ENABLED=0 go build -o bin/server-linux ./cmd/server` on the box
 (Go 1.22 auto-downloads the go.mod toolchain) and
 `systemctl restart sekats-console`.
+
+## Progress log — Flagsmith graduated rollout experiments (2026-11-26)
+
+Added for the TGGLEWARS Flagsmith Experimentation hackathon as a consolidated
+hackathon-window implementation. The public console had not been redeployed
+when this entry was written:
+
+- `internal/flags` is a small REST integration covering the Management API,
+  Edge identity evaluation, Events API ingestion, results refresh, and
+  results reads. The MCP server was not used because experiment lifecycle
+  actions such as start are not exposed there.
+- Local and wallet-signed approval now provision the managed Flagsmith
+  warehouse, a server-key-only multivariate flag (`control` plus keyed
+  `candidate`), mean human-verdict-alignment and summed policy-violation
+  metrics, and a started experiment. Approval still succeeds with an honest
+  offline/not-configured state when Flagsmith credentials are absent.
+- Approved drafts replay human-labelled queue rows as deterministic
+  `decision-<id>` identities. Pending rows are excluded; off-pattern rows
+  intentionally evaluate the same original action in both arms; remote
+  evaluation failure falls back to explicit control behaviour. Exposure,
+  alignment, and violation events use replay-time timestamps rather than
+  original decision time.
+- Local replay rows, per-variant counts, dashboard links, and either win
+  probability or warehouse-pending state persist in the adapter's
+  `flagsmith_rollouts.json` and render on the promotion card and Quality
+  Surface. Zero-exposure retries replay again after asynchronous edge
+  propagation; once an event batch has been accepted, retry refreshes results
+  instead of duplicating conversion events or risking Flagsmith's multi-variant
+  quarantine after a changed assignment.
+- `go vet ./...` and `go test ./...` pass, including a mocked end-to-end
+  provisioning/replay test. Live Flagsmith Cloud validation remains pending:
+  the implementation has not yet been run against real project credentials,
+  and the three-verdict fixture is expected to remain below Flagsmith's
+  50-identities-per-variant inference floor rather than fabricate traffic.
+- Deliberately out of scope: automatic experiment completion, automatic
+  rollout to 100%, automatic patch application, and any claim that the
+  experiment proves live agent execution or poker profitability.

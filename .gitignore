@@ -14,6 +14,7 @@ data/live/
 data/verdicts.json
 data/pattern_rejections.json
 data/policy_drafts.json
+data/flagsmith_rollouts.json
 data/policy-patches/
 data/attestations.json
 data/state/
