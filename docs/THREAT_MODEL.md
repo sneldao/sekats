@@ -99,10 +99,11 @@ Also not proven:
    credentialed service RPC URL. `SEKATS_NANSEN_API_KEY` is likewise
    server-side only: it authorizes outbound calls to api.nansen.ai and must
    never appear in HTML, JS, API responses, or logs — browsers see labels,
-   never the key. `FLAGSMITH_API_TOKEN` and `FLAGSMITH_ENVIRONMENT_KEY` are
-   server-side Flagsmith secrets with the same rendering/logging constraints;
-   prefer the git-ignored `data/state/flagsmith.env` or a secret manager over
-   shell history or committed files.
+   never the key. `FLAGSMITH_API_TOKEN`, `FLAGSMITH_ENVIRONMENT_KEY` and
+   `FLAGSMITH_SERVER_ENVIRONMENT_KEY` are server-side Flagsmith configuration
+   with the same rendering/logging constraints; prefer the git-ignored
+   `data/state/flagsmith.env` or a secret manager over shell history or
+   committed files.
 9. **Signature scope.** Only 65-byte, low-S secp256k1 EOA signatures are supported,
    with recovery IDs 0/1 or 27/28. EIP-1271 contract-wallet signatures and EIP-2098
    compact signatures are not supported. Document SHA-256 and EIP-712 Keccak-256
@@ -120,10 +121,12 @@ offline; conversely, a successful Flagsmith experiment does not apply the patch.
   thereby poison the evidence an operator sees. Use a dedicated hackathon
   project where practical, keep the token server-side, and rotate it if it may
   have leaked.
-- `FLAGSMITH_ENVIRONMENT_KEY` authorizes identity evaluation and experiment
-  event ingestion. A leak can poison exposure/conversion data even though it
-  cannot administer the project. Events are therefore evidence to audit, not a
-  replacement for human approval.
+- `FLAGSMITH_SERVER_ENVIRONMENT_KEY` authorizes server-side identity
+  evaluation and experiment event ingestion. A leak can poison exposure/conversion
+  data even though it cannot administer the project. The canonical
+  `FLAGSMITH_ENVIRONMENT_KEY` identifies the environment in management URLs and
+  may also authorize client-side/event endpoints, so neither key is rendered.
+  Events are therefore evidence to audit, not a replacement for human approval.
 - Remote assignment or warehouse unavailability falls back to explicit control
   behaviour rather than candidate behaviour. This availability fallback does
   not protect against a malicious or misconfigured Flagsmith project returning

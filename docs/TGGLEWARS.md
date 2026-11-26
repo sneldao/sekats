@@ -22,7 +22,7 @@ Implemented in the consolidated hackathon integration:
 - Retry behaviour that accounts for asynchronous edge/warehouse propagation: zero-exposure retries replay again; once exposures are accepted, retry refreshes results instead of duplicating conversions.
 - `go vet ./...` and `go test ./...` pass, including a mocked end-to-end provisioning/replay test.
 
-**Not yet proven:** the public console deployment is still the pre-Flagsmith build, and a live Flagsmith Cloud project has not been provisioned or validated end-to-end. The Cloud free tier is sufficient on paper (50k requests/month and up to 100k experiment users at the time of writing), but the first real API run may still expose beta/API-shape issues. Required credentials are documented in `README.md`; use the git-ignored `data/state/flagsmith.env`, never commit them.
+**Live Cloud validation — 2026-11-26:** the approved `flop-bet-to-check` fixture provisioned successfully in Flagsmith Cloud: managed warehouse connection, multivariate flag `sekats_policy_flop_bet_to_check`, keyed candidate variant, two metrics, and running experiment `sekats-flop-bet-to-check` (id 638). Edge evaluation returned experiment enrolment for deterministic decision identities; the canonical client key correctly did not reveal the server-key-only flag while the `ser.` key did. The Events API accepted three exposures plus three alignment events (six total warehouse events), and replay produced control 0/1 aligned versus candidate 2/2 aligned with zero violations. Warehouse results are intentionally still pending/inconclusive because the fixture is far below the 50-identities-per-variant inference floor; no significance is claimed. The public console deployment is still the pre-Flagsmith build. Required credentials are documented in `README.md`; use the git-ignored `data/state/flagsmith.env`, never commit them.
 
 **Deliberately not implemented:** a win does not automatically roll the candidate to 100%, complete the experiment, retire the draft, or apply the patch. This slice stops at evidence; the operator downloads/applies the patch externally. Automating experiment completion or full rollout is a stretch goal, not part of the committed implementation.
 
@@ -67,11 +67,11 @@ The operational endgame remains human-controlled: inspect local replay rows and 
 
 Realistic slice, in order:
 
-1. ☐ Use Flagsmith Cloud free tier; create project + environment. Docker is unavailable locally, so Cloud is the chosen path.
+1. ✅ Use Flagsmith Cloud free tier; create project + environment. Docker is unavailable locally, so Cloud is the chosen path.
 2. ✅ `internal/flags` REST client: remote deterministic identity evaluation, explicit control fallback when Flagsmith is unreachable — the quality layer must never take the agent down.
 3. ✅ Promotion pipeline: approve → create flag + initial rollout via Flagsmith API, surfaced on the draft card.
 4. ✅ Experiment wiring: replayed decision outcomes tagged by variant, fed as events; quality surface shows experiment state and win probability when Flagsmith has enough data.
-5. ☐ Validate the flow against live Flagsmith Cloud, including edge propagation, event acceptance, warehouse refresh, and the honest data-floor state.
+5. ✅ Validate the flow against live Flagsmith Cloud, including edge propagation, event acceptance, warehouse refresh, and the honest data-floor state.
 6. ☐ Demo video. The README setup/usage section is done.
 
 ## Submission checklist (rules)

@@ -176,8 +176,12 @@ needed. Other env vars:
   Management API. Create it in Organisation Settings → API Access → Create
   API Key. It stays server-side and is never rendered.
 - `FLAGSMITH_PROJECT_ID` — numeric Flagsmith project id.
-- `FLAGSMITH_ENVIRONMENT_KEY` — server-side environment key used for remote
-  identity evaluation and experiment events.
+- `FLAGSMITH_ENVIRONMENT_KEY` — canonical environment key used in Management
+  API paths and dashboard links.
+- `FLAGSMITH_SERVER_ENVIRONMENT_KEY` — server-side environment key (normally
+  beginning `ser.`) sent as `X-Environment-Key` for remote identity evaluation
+  and experiment events. Server-key-only flags are intentionally hidden from
+  client-key evaluations, so this separate key is required.
 - `FLAGSMITH_ROLLOUT_PERCENT` — percentage of decision identities enrolled
   in each new experiment, default `20`. Use `100` for the small fixture demo;
   use a lower percentage for a real traffic cohort.
@@ -199,7 +203,8 @@ setup:
 ```
 export FLAGSMITH_API_TOKEN=<organisation-api-token>
 export FLAGSMITH_PROJECT_ID=<numeric-project-id>
-export FLAGSMITH_ENVIRONMENT_KEY=<server-side-environment-key>
+export FLAGSMITH_ENVIRONMENT_KEY=<canonical-environment-key>
+export FLAGSMITH_SERVER_ENVIRONMENT_KEY=<server-side-environment-key>
 # optional for the tiny fixture demo: enroll the whole replay cohort
 export FLAGSMITH_ROLLOUT_PERCENT=100
 ```
@@ -214,7 +219,8 @@ umask 077
 cat > data/state/flagsmith.env <<'EOF'
 FLAGSMITH_API_TOKEN=<organisation-api-token>
 FLAGSMITH_PROJECT_ID=<numeric-project-id>
-FLAGSMITH_ENVIRONMENT_KEY=<server-side-environment-key>
+FLAGSMITH_ENVIRONMENT_KEY=<canonical-environment-key>
+FLAGSMITH_SERVER_ENVIRONMENT_KEY=<server-side-environment-key>
 FLAGSMITH_ROLLOUT_PERCENT=100
 EOF
 chmod 600 data/state/flagsmith.env
@@ -222,9 +228,10 @@ set -a; . data/state/flagsmith.env; set +a
 # start the server from this same shell
 ```
 
-Find the project id and environment key in the Flagsmith project/environment
-settings; create the organisation token under Organisation Settings → API
-Access. Keep all three out of git. On a human approval the server:
+Find the project id and canonical environment key in the Flagsmith
+project/environment settings; create a server-side environment key in the
+environment's SDK-key settings and the organisation token under Organisation
+Settings → API Access. Keep all four values out of git. On a human approval the server:
 
 1. ensures the environment has Flagsmith's zero-config managed warehouse;
 2. creates or reuses a multivariate flag named `sekats_policy_<draft_id>`

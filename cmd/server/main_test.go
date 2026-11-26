@@ -509,7 +509,7 @@ func TestApprovalProvisionsFlagsmithRollout(t *testing.T) {
 	a := pipelineApp(t, fixtureDir(t), ad)
 	a.flagger = flags.NewClient(flags.Config{
 		APIURL: server.URL, EventsURL: server.URL, ProjectID: 7,
-		EnvironmentKey: "env", ManagementToken: "token", RolloutPercent: 20, CandidatePercent: 50,
+		EnvironmentKey: "env", ServerEnvironmentKey: "ser.test", ManagementToken: "token", RolloutPercent: 20, CandidatePercent: 50,
 	})
 	_, _, _, _, _, queue := a.data.Snapshot()
 	groups := make(map[string][]review.Item)

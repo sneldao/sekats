@@ -30,15 +30,16 @@ const (
 // Config is the operator-provided Flagsmith wiring. ManagementToken is a
 // secret organisation API key and must never be rendered or committed.
 type Config struct {
-	APIURL           string
-	EvaluationURL    string
-	EventsURL        string
-	DashboardURL     string
-	ProjectID        int
-	EnvironmentKey   string
-	ManagementToken  string
-	RolloutPercent   float64
-	CandidatePercent float64
+	APIURL               string
+	EvaluationURL        string
+	EventsURL            string
+	DashboardURL         string
+	ProjectID            int
+	EnvironmentKey       string
+	ServerEnvironmentKey string
+	ManagementToken      string
+	RolloutPercent       float64
+	CandidatePercent     float64
 }
 
 func ConfigFromEnv() Config {
@@ -53,15 +54,16 @@ func ConfigFromEnv() Config {
 		evaluationFallback = apiURL
 	}
 	return Config{
-		APIURL:           apiURL,
-		EvaluationURL:    envOr("FLAGSMITH_EVALUATION_API_URL", evaluationFallback),
-		EventsURL:        envOr("FLAGSMITH_EVENTS_URL", "https://events.api.flagsmith.com"),
-		DashboardURL:     envOr("FLAGSMITH_DASHBOARD_URL", "https://app.flagsmith.com"),
-		ProjectID:        project,
-		EnvironmentKey:   os.Getenv("FLAGSMITH_ENVIRONMENT_KEY"),
-		ManagementToken:  firstEnv("FLAGSMITH_API_TOKEN", "FLAGSMITH_API_KEY"),
-		RolloutPercent:   rollout,
-		CandidatePercent: candidate,
+		APIURL:               apiURL,
+		EvaluationURL:        envOr("FLAGSMITH_EVALUATION_API_URL", evaluationFallback),
+		EventsURL:            envOr("FLAGSMITH_EVENTS_URL", "https://events.api.flagsmith.com"),
+		DashboardURL:         envOr("FLAGSMITH_DASHBOARD_URL", "https://app.flagsmith.com"),
+		ProjectID:            project,
+		EnvironmentKey:       os.Getenv("FLAGSMITH_ENVIRONMENT_KEY"),
+		ServerEnvironmentKey: os.Getenv("FLAGSMITH_SERVER_ENVIRONMENT_KEY"),
+		ManagementToken:      firstEnv("FLAGSMITH_API_TOKEN", "FLAGSMITH_API_KEY"),
+		RolloutPercent:       rollout,
+		CandidatePercent:     candidate,
 	}
 }
 
@@ -89,7 +91,7 @@ func envOr(key, fallback string) string {
 }
 
 func (c Config) Configured() bool {
-	return c.ManagementToken != "" && c.EnvironmentKey != "" && c.ProjectID > 0
+	return c.ManagementToken != "" && c.EnvironmentKey != "" && c.ServerEnvironmentKey != "" && c.ProjectID > 0
 }
 
 // Client is a small REST client for the exact API surface sekats needs.
@@ -153,7 +155,7 @@ func (c *Client) do(ctx context.Context, method, endpoint string, body, out any,
 	if management {
 		req.Header.Set("Authorization", "Api-Key "+c.cfg.ManagementToken)
 	} else {
-		req.Header.Set("X-Environment-Key", c.cfg.EnvironmentKey)
+		req.Header.Set("X-Environment-Key", c.cfg.ServerEnvironmentKey)
 	}
 	resp, err := c.hc.Do(req)
 	if err != nil {

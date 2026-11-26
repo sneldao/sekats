@@ -685,7 +685,7 @@ func (a *app) provisionRollout(ctx context.Context, d engine.Draft, force bool) 
 	r.CandidatePercent = a.flagger.Config().CandidatePercent
 	if !a.flagger.Config().Configured() {
 		r.Status = flags.StatusNotConfigured
-		r.Error = "Flagsmith is not configured; approval remains valid. Set FLAGSMITH_API_TOKEN, FLAGSMITH_ENVIRONMENT_KEY, and FLAGSMITH_PROJECT_ID, then use Retry rollout."
+		r.Error = "Flagsmith is not configured; approval remains valid. Set FLAGSMITH_API_TOKEN, FLAGSMITH_PROJECT_ID, FLAGSMITH_ENVIRONMENT_KEY, and FLAGSMITH_SERVER_ENVIRONMENT_KEY, then use Retry rollout."
 		if err := a.rollouts.Put(r); err != nil {
 			log.Printf("persist rollout %s: %v", d.ID, err)
 		}

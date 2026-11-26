@@ -49,7 +49,7 @@ func TestProvisionExperimentCreatesAndStarts(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(Config{APIURL: server.URL, EventsURL: server.URL, ProjectID: 7, EnvironmentKey: "env", ManagementToken: "secret", RolloutPercent: 20, CandidatePercent: 50})
+	client := NewClient(Config{APIURL: server.URL, EventsURL: server.URL, ProjectID: 7, EnvironmentKey: "env", ServerEnvironmentKey: "ser.test", ManagementToken: "secret", RolloutPercent: 20, CandidatePercent: 50})
 	provisioned, err := client.ProvisionExperiment(context.Background(), engine.Draft{ID: "draft-1", Rule: "prefer the safer action"})
 	if err != nil {
 		t.Fatal(err)
@@ -129,6 +129,9 @@ func TestEvaluateUsesSeparateEdgeEndpoint(t *testing.T) {
 	var edgeHits, managementHits int
 	edge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		edgeHits++
+		if got := r.Header.Get("X-Environment-Key"); got != "ser.test" {
+			t.Errorf("evaluation used %q rather than the server-side environment key", got)
+		}
 		json.NewEncoder(w).Encode(map[string]any{"flags": []map[string]any{{
 			"feature": map[string]any{"id": 11, "name": "flag"}, "enabled": true,
 			"feature_state_value": Control,
@@ -142,7 +145,7 @@ func TestEvaluateUsesSeparateEdgeEndpoint(t *testing.T) {
 	}))
 	defer management.Close()
 
-	client := NewClient(Config{APIURL: management.URL, EvaluationURL: edge.URL, EnvironmentKey: "env"})
+	client := NewClient(Config{APIURL: management.URL, EvaluationURL: edge.URL, EnvironmentKey: "env", ServerEnvironmentKey: "ser.test"})
 	evaluation, err := client.Evaluate(context.Background(), "flag", "decision-42")
 	if err != nil {
 		t.Fatal(err)

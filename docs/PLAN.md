@@ -302,10 +302,15 @@ when this entry was written:
   instead of duplicating conversion events or risking Flagsmith's multi-variant
   quarantine after a changed assignment.
 - `go vet ./...` and `go test ./...` pass, including a mocked end-to-end
-  provisioning/replay test. Live Flagsmith Cloud validation remains pending:
-  the implementation has not yet been run against real project credentials,
-  and the three-verdict fixture is expected to remain below Flagsmith's
-  50-identities-per-variant inference floor rather than fabricate traffic.
+  provisioning/replay test. Live Flagsmith Cloud validation on 2026-11-26
+  provisioned the managed warehouse, server-key-only multivariate flag,
+  metrics, and running experiment; edge evaluation enrolled deterministic
+  decision identities and the warehouse received six exposure/alignment
+  events. Results correctly remain inconclusive because the three-verdict
+  fixture is below Flagsmith's 50-identities-per-variant inference floor
+  rather than fabricating traffic. Management URLs use the canonical
+  environment key while evaluation/events use a separate server-side `ser.`
+  key.
 - Deliberately out of scope: automatic experiment completion, automatic
   rollout to 100%, automatic patch application, and any claim that the
   experiment proves live agent execution or poker profitability.
